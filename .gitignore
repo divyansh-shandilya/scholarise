@@ -28,3 +28,6 @@ dist-ssr
 /*.cjs
 app.js
 styles.css
+screenshots/
+capture_screens.js
+quick-config.yml

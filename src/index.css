@@ -1,0 +1,196 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-cream: #FAF5ED;
+  --text-dark: #0A0C0E;
+  --text-muted: #4B5563;
+  --text-sub: #374151;
+  --btn-bg: #0A0C0E;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #0a0b0e;
+  overflow: hidden;
+}
+
+/* Global scrollbar suppression - zero ugly browser scrollbars */
+* {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+*::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.no-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+/* Glass Card 3D & Shimmer effects */
+.glass-slab {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  will-change: transform;
+}
+
+/* Seamless floating animations with NO reload glitch or snap */
+@keyframes float3D_A {
+  0%, 100% {
+    transform: rotateX(8deg) rotateY(-14deg) rotateZ(-22deg) translateY(0px);
+  }
+  50% {
+    transform: rotateX(8deg) rotateY(-14deg) rotateZ(-22deg) translateY(-7px);
+  }
+}
+
+@keyframes float3D_B {
+  0%, 100% {
+    transform: rotateX(8deg) rotateY(-14deg) rotateZ(-22deg) translateY(0px);
+  }
+  50% {
+    transform: rotateX(8deg) rotateY(-14deg) rotateZ(-22deg) translateY(7px);
+  }
+}
+
+.animate-float-a {
+  animation: float3D_A 6s ease-in-out infinite;
+  transform: rotateX(8deg) rotateY(-14deg) rotateZ(-22deg);
+}
+
+.animate-float-b {
+  /* Negative delay so animation is already running smoothly on page load, zero glitch */
+  animation: float3D_B 7s ease-in-out infinite -3.5s;
+  transform: rotateX(8deg) rotateY(-14deg) rotateZ(-22deg);
+}
+
+/* Device frame shadow */
+.phone-shadow {
+  box-shadow: 
+    0 0 0 12px #1c1d22,
+    0 0 0 14px #2e3038,
+    0 30px 80px -15px rgba(0, 0, 0, 0.6),
+    0 10px 30px -10px rgba(0, 0, 0, 0.4);
+}
+
+/* Thinking Orb Keyframe Animations */
+@keyframes orbSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes orbSpinReverse {
+  0% {
+    transform: rotate(360deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes orbPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes orbFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes orbMatchPop {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18);
+    filter: brightness(1.25);
+  }
+  100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+}
+
+.animate-orb-spin {
+  animation: orbSpin 3s linear infinite;
+}
+
+.animate-orb-spin-reverse {
+  animation: orbSpinReverse 4s linear infinite;
+}
+
+.animate-orb-pulse {
+  animation: orbPulse 2s ease-in-out infinite;
+}
+
+.animate-orb-float {
+  animation: orbFloat 2.5s ease-in-out infinite;
+}
+
+.animate-orb-match {
+  animation: orbMatchPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+/* Apple-style Smooth Page Transitions */
+@keyframes pageEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.99);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0px) scale(1);
+  }
+}
+
+@keyframes toastSlideDown {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -12px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0px) scale(1);
+  }
+}
+
+.animate-page-enter {
+  animation: pageEnter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-toast {
+  animation: toastSlideDown 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+

@@ -121,26 +121,31 @@ export default function TopicSelectionModal({
       onClick={onClose}
     >
       <div
-        className="w-full max-w-[430px] bg-[#FAF5ED] rounded-t-[36px] sm:rounded-[36px] border border-[#E5E0D8] shadow-[0_24px_60px_rgba(0,0,0,0.22)] overflow-hidden flex flex-col max-h-[90vh] animate-page-enter"
+        className="w-full max-w-[430px] bg-gradient-to-b from-[#FAF5ED] to-[#F7F2E8] rounded-t-[36px] sm:rounded-[36px] border border-[#E5E0D8] shadow-[0_24px_60px_rgba(0,0,0,0.22)] overflow-hidden flex flex-col max-h-[90vh] animate-page-enter"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 pt-6 pb-3 flex items-center justify-between border-b border-black/[0.05]">
-          <div className="flex items-center gap-2">
-            <span className="w-8 h-8 rounded-full bg-[#FEF9EE] border border-[#F5A623]/30 flex items-center justify-center text-[#D97706]">
-              <Sparkles size={16} />
-            </span>
-            <span className="text-[12px] font-bold text-[#D97706] tracking-wider uppercase">
-              New Study Session
-            </span>
+        <div className="px-6 pt-3 pb-3 border-b border-black/[0.05]">
+          {/* iOS Sheet Pull Handle */}
+          <div className="w-10 h-1 rounded-full bg-black/15 mx-auto mb-2.5 sm:hidden" />
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-8 h-8 rounded-full bg-[#FEF9EE] border border-[#F5A623]/30 flex items-center justify-center text-[#D97706]">
+                <Sparkles size={16} />
+              </span>
+              <span className="text-[12px] font-bold text-[#D97706] tracking-wider uppercase">
+                New Study Session
+              </span>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#71717A] hover:text-[#0A0C0E] transition-colors cursor-pointer"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#71717A] hover:text-[#0A0C0E] transition-colors cursor-pointer"
-            aria-label="Close"
-          >
-            <X size={18} />
-          </button>
         </div>
 
         {/* Scrollable Body */}
@@ -196,8 +201,8 @@ export default function TopicSelectionModal({
                 type="text"
                 value={topicInput}
                 onChange={(e) => setTopicInput(e.target.value)}
-                placeholder={`e.g., Trigonometry, Organic Chemistry...`}
-                className="w-full bg-white border border-[#E5E0D8] rounded-[20px] pl-11 pr-10 py-3.5 text-[15px] font-medium text-[#0A0C0E] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#D97706]/15 shadow-2xs transition-all"
+                placeholder={`e.g., Memory Management, Trigonometry...`}
+                className="w-full bg-white border border-[#E5DFD4] rounded-[20px] pl-11 pr-10 py-3.5 text-[15px] font-medium text-[#0A0C0E] placeholder:text-[#9CA3AF] focus:outline-none focus:border-[#D97706] focus:ring-2 focus:ring-[#D97706]/15 shadow-2xs transition-all"
               />
               {topicInput && (
                 <button
@@ -228,14 +233,16 @@ export default function TopicSelectionModal({
                     key={sug.label}
                     data-testid={`topic-suggestion-${sug.label.toLowerCase().replace(/\s+/g, '-')}`}
                     onClick={() => handleSelectSuggestion(sug.label)}
-                    className={`w-full p-3.5 rounded-[18px] text-left flex items-center justify-between transition-all duration-200 cursor-pointer ${
+                    className={`w-full p-3.5 rounded-[20px] text-left flex items-center justify-between transition-all duration-200 cursor-pointer ${
                       isSelected
                         ? 'bg-[#FEF9EE] border-2 border-[#D97706] shadow-2xs'
-                        : 'bg-white border border-[#E5E0D8] hover:border-black/20 hover:bg-[#FAF8F5]'
+                        : 'bg-white border border-black/[0.06] hover:border-black/20 hover:bg-[#FAF8F5] shadow-2xs active:scale-[0.99]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <span className="text-[20px] leading-none">{sug.icon}</span>
+                      <div className="w-10 h-10 rounded-[14px] bg-[#FAF5ED] border border-black/[0.04] flex items-center justify-center text-[20px] shrink-0">
+                        {sug.icon}
+                      </div>
                       <div>
                         <div className="text-[14.5px] font-bold text-[#0A0C0E] leading-snug">
                           {sug.label}
@@ -256,7 +263,7 @@ export default function TopicSelectionModal({
           </div>
 
           {/* Session Format Guarantee */}
-          <div className="p-3.5 rounded-[18px] bg-white border border-black/[0.04] flex items-center gap-3 text-[#4B5563]">
+          <div className="p-3.5 rounded-[20px] bg-white border border-black/[0.05] flex items-center gap-3 text-[#4B5563] shadow-2xs">
             <Clock size={16} className="text-[#D97706] shrink-0" />
             <span className="text-[12px] leading-snug">
               <strong className="text-[#0A0C0E] font-bold">Bite-Sized Guarantee:</strong> 3 clean micro-parts + 1 quick check. Zero overwhelming walls of text.

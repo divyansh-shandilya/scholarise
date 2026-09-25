@@ -32,7 +32,11 @@ import {
   Flame,
   Mail,
   Phone,
+  Sparkles,
+  Award,
 } from 'lucide-react';
+import { generateStudySession } from './services/geminiStudyService';
+import ActiveStudySessionModal from './components/ActiveStudySessionModal';
 
 const SESSION_STORAGE_KEY = 'scholarise_session_v1';
 
@@ -102,11 +106,78 @@ export default function App() {
     }, 2400);
   };
 
-  // Profile modal views: edit name & terms
+  // Profile modal views: edit name, help & terms
   const [isEditingProfileName, setIsEditingProfileName] = useState(false);
   const [profileNameInput, setProfileNameInput] = useState('');
   const [isViewingTerms, setIsViewingTerms] = useState(false);
+  const [isViewingHelp, setIsViewingHelp] = useState(false);
   const customSubjectContainerRef = useRef(null);
+
+  // Active Gemini Study Session State
+  const [isStudySessionOpen, setIsStudySessionOpen] = useState(false);
+  const [isGeneratingSession, setIsGeneratingSession] = useState(false);
+  const [activeStudySessionData, setActiveStudySessionData] = useState(null);
+
+  const handleStartStudySession = async (subKey) => {
+    let chosenName = 'Mathematics';
+    if (subKey) {
+      if (subKey === 'other') {
+        chosenName = customSubject.trim() || 'General Studies';
+      } else {
+        const found = subjects.find(
+          (s) => s.id.toLowerCase() === String(subKey).toLowerCase()
+        );
+        chosenName = found ? found.name : subKey;
+      }
+    } else if (selectedSubjects.length > 0) {
+      const firstId = selectedSubjects[0];
+      if (firstId === 'other') {
+        chosenName = customSubject.trim() || 'General Studies';
+      } else {
+        const found = subjects.find(
+          (s) => s.id.toLowerCase() === String(firstId).toLowerCase()
+        );
+        chosenName = found ? found.name : firstId;
+      }
+    }
+
+    setIsStudySessionOpen(true);
+    setIsGeneratingSession(true);
+    setActiveStudySessionData({
+      subject: chosenName,
+      title: `Preparing ${chosenName} Revision...`,
+      estimatedMinutes: selectedTime === '30min' ? 30 : selectedTime === '45min' ? 45 : selectedTime === '1hour' ? 60 : 15,
+      summary: 'Connecting with Gemini AI to generate customized key concepts and quiz questions.',
+      keyConcepts: [],
+      quizQuestions: []
+    });
+
+    try {
+      const res = await generateStudySession({
+        subject: chosenName,
+        goal: selectedExamType,
+        time: selectedTime,
+        userName: userName || 'Student',
+        syllabusName: uploadedFile?.name
+      });
+      setActiveStudySessionData(res);
+    } catch (err) {
+      console.error('Study session error:', err);
+    } finally {
+      setIsGeneratingSession(false);
+    }
+  };
+
+  const handleFinishStudySession = (completed) => {
+    const newEntry = {
+      subject: completed.subject,
+      durationMin: completed.durationMin || 15,
+      date: new Date().toISOString(),
+      title: completed.title
+    };
+    setStudySessions((prev) => [newEntry, ...prev]);
+    showToast(`🎉 Logged +${completed.durationMin || 15}m in ${completed.subject}!`);
+  };
 
   useEffect(() => {
     if (selectedSubjects.includes('other')) {
@@ -398,7 +469,11 @@ export default function App() {
   );
 
   return (
-    <div className="w-full h-[100dvh] bg-[#0a0b0e] flex items-center justify-center p-0 sm:p-4 font-sans select-none antialiased overflow-hidden">
+    <div className="w-full h-[100dvh] bg-[#0E1015] sm:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] sm:from-[#1E2028] sm:via-[#111217] sm:to-[#0A0B0E] flex items-center justify-center p-0 sm:p-6 font-sans select-none antialiased overflow-hidden relative">
+      {/* Ambient Studio Lighting for Desktop */}
+      <div className="hidden sm:block absolute w-[500px] h-[500px] rounded-full bg-[#F5A623]/[0.05] blur-[120px] pointer-events-none -top-24 left-1/4" />
+      <div className="hidden sm:block absolute w-[500px] h-[500px] rounded-full bg-[#3B82F6]/[0.04] blur-[120px] pointer-events-none -bottom-24 right-1/4" />
+
       {/* Mobile Screen Chassis / Viewport */}
       <div
         data-mobile-screen
@@ -407,11 +482,11 @@ export default function App() {
           backgroundColor: '#FAF5ED',
         }}
       >
-        {/* Floating In-App Toast Message (Apple Dynamic Island style) */}
+        {/* Floating In-App Toast Message (Positioned cleanly above bottom tab bar) */}
         {toastMessage && (
-          <div className="absolute top-5 inset-x-0 flex justify-center z-50 pointer-events-none px-4">
-            <div className="bg-[#0A0C0E]/95 backdrop-blur-md text-white text-[13px] font-[600] px-4 py-2 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.25)] border border-white/10 flex items-center gap-2 animate-toast pointer-events-auto">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#F5A623] animate-pulse" />
+          <div className="absolute bottom-20 inset-x-0 flex justify-center z-60 pointer-events-none px-4 animate-toast">
+            <div className="bg-[#0A0C0E]/95 backdrop-blur-md text-white text-[13px] font-[600] px-4 py-2.5 rounded-full shadow-[0_8px_24px_rgba(0,0,0,0.35)] border border-white/10 flex items-center gap-2 pointer-events-auto">
+              <span className="w-2 h-2 rounded-full bg-[#F5A623] animate-pulse" />
               <span>{toastMessage}</span>
             </div>
           </div>
@@ -449,13 +524,12 @@ export default function App() {
 
             {/* Hero Copy */}
             <div className="relative z-20 px-8 pt-8 flex-1 flex flex-col justify-start">
-              <h1 className="text-[50px] sm:text-[52px] leading-[1.12] font-[800] tracking-[-0.038em]">
-                <span className="block text-[#0A0C0E]">Study</span>
-                <span className="block text-[#0A0C0E]">smarter,</span>
-                <span className="block text-[#52525B]">not harder.</span>
+              <h1 className="text-[48px] sm:text-[52px] leading-[1.12] font-[800] tracking-[-0.038em]">
+                <span className="block text-[#0A0C0E]">Study smarter,</span>
+                <span className="block text-[#52525B]">track deeper.</span>
               </h1>
-              <p className="mt-4 text-[17px] leading-[1.4] text-[#4B5563] font-[450] max-w-[270px] tracking-[-0.015em]">
-                A personalized plan that turns your workload into a clear next step.
+              <p className="mt-4 text-[16px] leading-[1.4] text-[#4B5563] font-[450] max-w-[290px] tracking-[-0.015em]">
+                Personalized AI revision plans, adaptive quizzes, and real progress metrics tailored to your syllabus.
               </p>
             </div>
 
@@ -529,16 +603,16 @@ export default function App() {
 
             {/* Main Content Area */}
             <div className="relative z-20 px-7 pt-6 flex-1 flex flex-col justify-start">
-              {/* Question Headline (Exact to reference mock) */}
+              {/* Question Headline */}
               <h1 className="text-[34px] sm:text-[36px] font-[800] leading-[1.12] text-[#0A0C0E] tracking-tight">
-                Which exams<br />
-                are you preparing<br />
-                for?
+                What is your<br />
+                primary study<br />
+                goal?
               </h1>
 
               {/* Subtitle Explainer */}
               <p className="mt-3.5 text-[15px] leading-[1.4] text-[#71717A] font-[450] max-w-[310px]">
-                This helps me create the right type of study plan for you. You can add more later.
+                This helps tailor your daily schedule and question difficulty. You can add more later.
               </p>
 
               {/* Option Selection Cards */}
@@ -1462,9 +1536,9 @@ export default function App() {
                 )}
               </div>
 
-              {/* Drag and Drop Subtext outside the card (Exact to reference mock) */}
+              {/* Subtext outside the card */}
               <div className="text-[13px] text-[#8E8E93] text-center mt-3.5 font-normal select-none">
-                or drag and drop it here
+                or tap to choose from files &amp; notes
               </div>
             </div>
 
@@ -1734,9 +1808,7 @@ export default function App() {
                       {/* Apple-spec Primary CTA Button */}
                       <button
                         type="button"
-                        onClick={() => {
-                          showToast('Not configured yet');
-                        }}
+                        onClick={() => handleStartStudySession(selectedSubjects[0])}
                         className="mt-5 bg-[#0A0C0E] hover:bg-[#1E2024] active:scale-[0.98] text-white px-6 py-3 rounded-full inline-flex items-center gap-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.16)] font-[600] text-[14px] cursor-pointer transition-all"
                       >
                         <Play size={13.5} fill="currentColor" strokeWidth={0} />
@@ -1779,9 +1851,7 @@ export default function App() {
                           <button
                             type="button"
                             key={subId}
-                            onClick={() => {
-                              showToast('Not configured yet');
-                            }}
+                            onClick={() => handleStartStudySession(subId)}
                             className="bg-white rounded-[20px] p-4 border border-black/[0.05] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between w-[145px] h-[122px] shrink-0 text-left hover:border-black/[0.12] active:scale-[0.98] transition-all cursor-pointer group"
                           >
                             <div className="w-[36px] h-[36px] rounded-[11px] bg-[#FAF5ED] flex items-center justify-center text-[#1C1C1E] group-hover:bg-[#FCEAD2] group-hover:text-[#9A5826] transition-colors">
@@ -2105,6 +2175,72 @@ export default function App() {
                         </button>
                       </div>
                     </div>
+                  ) : isViewingHelp ? (
+                    /* Subview: Help & FAQ */
+                    <div className="animate-page-enter">
+                      <button
+                        type="button"
+                        onClick={() => setIsViewingHelp(false)}
+                        className="inline-flex items-center gap-1 text-[14px] font-[600] text-[#0A0C0E] hover:text-[#9A5826] mb-4 -ml-1 cursor-pointer transition-colors"
+                      >
+                        <ChevronLeft size={18} strokeWidth={2.4} />
+                        <span>Profile</span>
+                      </button>
+
+                      <h1 className="text-[28px] font-[800] text-[#0A0C0E] tracking-tight leading-[1.15]">
+                        Help & Support
+                      </h1>
+                      <p className="text-[13.5px] text-[#636366] mt-1 font-[450]">
+                        Answers, AI study features, and terms.
+                      </p>
+
+                      <div className="mt-5 space-y-3 pb-6">
+                        <div className="bg-white rounded-[20px] p-4 border border-black/[0.05] shadow-[0_1px_4px_rgba(0,0,0,0.01)]">
+                          <h3 className="text-[14.5px] font-[700] text-[#0A0C0E] mb-1 flex items-center gap-2">
+                            <Sparkles size={16} className="text-[#F5A623]" />
+                            <span>How are study sessions created?</span>
+                          </h3>
+                          <p className="text-[13px] text-[#636366] leading-relaxed">
+                            Scholarise connects directly with Gemini AI to generate custom key concepts, formulas, and multiple-choice quizzes matched to your subjects and goals.
+                          </p>
+                        </div>
+
+                        <div className="bg-white rounded-[20px] p-4 border border-black/[0.05] shadow-[0_1px_4px_rgba(0,0,0,0.01)]">
+                          <h3 className="text-[14.5px] font-[700] text-[#0A0C0E] mb-1 flex items-center gap-2">
+                            <Flame size={16} className="text-[#D97706]" />
+                            <span>How do streaks and progress work?</span>
+                          </h3>
+                          <p className="text-[13px] text-[#636366] leading-relaxed">
+                            Completing any interactive study session logs real minutes to your weekly progress chart and advances your daily consistency streak.
+                          </p>
+                        </div>
+
+                        <div className="bg-white rounded-[20px] p-4 border border-black/[0.05] shadow-[0_1px_4px_rgba(0,0,0,0.01)]">
+                          <h3 className="text-[14.5px] font-[700] text-[#0A0C0E] mb-1 flex items-center gap-2">
+                            <BookOpen size={16} className="text-[#2563EB]" />
+                            <span>Can I add or change subjects?</span>
+                          </h3>
+                          <p className="text-[13px] text-[#636366] leading-relaxed">
+                            Yes! Tap 'Edit' next to Your subjects on the Home screen to select additional topics or enter a custom subject anytime.
+                          </p>
+                        </div>
+
+                        {/* Open Terms & Conditions Agreement */}
+                        <div className="pt-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setIsViewingHelp(false);
+                              setIsViewingTerms(true);
+                            }}
+                            className="w-full bg-[#FAF5ED] border border-[#E5E0D8] text-[#0A0C0E] py-3.5 rounded-full font-[600] text-[14px] hover:bg-[#F2EADB] active:scale-[0.98] transition-all cursor-pointer flex items-center justify-between px-5"
+                          >
+                            <span>Terms & Conditions Agreement</span>
+                            <ChevronRight size={16} strokeWidth={2.2} className="text-[#71717A]" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
                   ) : isViewingTerms ? (
                     /* Subview: Terms and Conditions */
                     <div className="animate-page-enter">
@@ -2210,11 +2346,11 @@ export default function App() {
                         </button>
                       </div>
 
-                      {/* Row 2: Help (Click for Terms & Conditions) */}
+                      {/* Row 2: Help & Support (FAQ + Terms) */}
                       <div className="bg-white/95 rounded-[22px] border border-black/[0.04] shadow-[0_2px_12px_rgba(0,0,0,0.02)] mb-3">
                         <button
                           type="button"
-                          onClick={() => setIsViewingTerms(true)}
+                          onClick={() => setIsViewingHelp(true)}
                           className="w-full flex items-center justify-between p-4 cursor-pointer active:bg-black/[0.02] rounded-[22px] transition-colors"
                         >
                           <div className="flex items-center gap-3.5">
@@ -2223,10 +2359,10 @@ export default function App() {
                             </div>
                             <div className="text-left">
                               <div className="text-[15.5px] font-[700] text-[#0A0C0E] leading-tight">
-                                Help
+                                Help & Support
                               </div>
                               <div className="text-[13px] text-[#71717A] mt-0.5">
-                                Terms and conditions
+                                FAQ, AI guide & terms
                               </div>
                             </div>
                           </div>
@@ -2276,7 +2412,7 @@ export default function App() {
               )}
 
               {/* Bottom Translucent Tab Bar — Exactly 3 Tabs: Home, Progress, Profile */}
-              <div className="relative z-30 px-6 pt-2 pb-3.5 bg-[#FAF5ED]/95 backdrop-blur-md border-t border-black/[0.05] flex flex-col items-center shrink-0">
+              <div className="relative z-30 px-6 pt-2.5 pb-5 sm:pb-6 bg-[#FAF5ED]/95 backdrop-blur-md border-t border-black/[0.05] flex flex-col items-center shrink-0">
                 <div className="w-full flex items-center justify-around py-0.5">
                   {/* Tab 1: Home */}
                   <button
@@ -2284,6 +2420,7 @@ export default function App() {
                     onClick={() => {
                       setIsEditingProfileName(false);
                       setIsViewingTerms(false);
+                      setIsViewingHelp(false);
                       setActiveTab('home');
                     }}
                     className={`min-w-[64px] min-h-[44px] flex flex-col items-center justify-center gap-1 transition-colors cursor-pointer ${
@@ -2302,6 +2439,7 @@ export default function App() {
                     onClick={() => {
                       setIsEditingProfileName(false);
                       setIsViewingTerms(false);
+                      setIsViewingHelp(false);
                       setActiveTab('progress');
                     }}
                     className={`min-w-[64px] min-h-[44px] flex flex-col items-center justify-center gap-1 transition-colors cursor-pointer ${
@@ -2317,7 +2455,12 @@ export default function App() {
                   {/* Tab 3: Profile */}
                   <button
                     type="button"
-                    onClick={() => setActiveTab('profile')}
+                    onClick={() => {
+                      setIsEditingProfileName(false);
+                      setIsViewingTerms(false);
+                      setIsViewingHelp(false);
+                      setActiveTab('profile');
+                    }}
                     className={`min-w-[64px] min-h-[44px] flex flex-col items-center justify-center gap-1 transition-colors cursor-pointer ${
                       activeTab === 'profile'
                         ? 'text-[#0A0C0E]'
@@ -2332,6 +2475,15 @@ export default function App() {
             </div>
           );
         })()}
+
+        {/* Interactive Active Study Session Modal (Powered by Gemini AI) */}
+        <ActiveStudySessionModal
+          isOpen={isStudySessionOpen}
+          isLoading={isGeneratingSession}
+          sessionData={activeStudySessionData}
+          onClose={() => setIsStudySessionOpen(false)}
+          onFinishSession={handleFinishStudySession}
+        />
       </div>
     </div>
   );

@@ -23,6 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
+# Environment variables
+.env
+.env.*
+!.env.example
+
 # Temporary test scripts & root test captures
 /*.png
 /*.cjs
@@ -31,3 +36,9 @@ styles.css
 screenshots/
 capture_screens.js
 quick-config.yml
+audit_captures/
+audit_captures_v2/
+audit_site.js
+test_ai_session_flow.js
+test_gemini.js
+

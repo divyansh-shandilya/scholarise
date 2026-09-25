@@ -1,7 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Sparkles, ArrowRight, Search, BookOpen, Clock } from 'lucide-react';
 
 const TOPIC_SUGGESTIONS = {
+  'Computer Science': [
+    { label: 'Memory Management', icon: '💾', hint: 'Stack vs Heap & pointers' },
+    { label: 'Data Structures', icon: '🌳', hint: 'Trees, graphs & hash maps' },
+    { label: 'Algorithms & Big-O', icon: '⚡', hint: 'Sorting & time complexity' },
+    { label: 'Object-Oriented Design', icon: '🧩', hint: 'Classes, inheritance & SOLID' }
+  ],
   Mathematics: [
     { label: 'Trigonometry', icon: '📐', hint: 'SOH-CAH-TOA & angles' },
     { label: 'Quadratic Equations', icon: '📊', hint: 'Factoring & roots' },
@@ -16,11 +22,40 @@ const TOPIC_SUGGESTIONS = {
     { label: 'Chemical Bonding', icon: '🧪', hint: 'Covalent & ionic' },
     { label: 'Optics & Waves', icon: '💡', hint: 'Refraction & light' }
   ],
+  Physics: [
+    { label: 'Newtonian Mechanics', icon: '🍎', hint: 'Force, mass & acceleration' },
+    { label: 'Thermodynamics', icon: '⚡', hint: 'Heat, work & entropy' },
+    { label: 'Electromagnetism', icon: '🧲', hint: 'Fields, charge & circuits' },
+    { label: 'Optics & Waves', icon: '💡', hint: 'Refraction & interference' }
+  ],
+  Chemistry: [
+    { label: 'Chemical Bonding', icon: '🧪', hint: 'Covalent, ionic & polar' },
+    { label: 'Stoichiometry', icon: '⚖️', hint: 'Mole ratios & yield' },
+    { label: 'Thermodynamics & Equilibrium', icon: '🔥', hint: "Le Chatelier's principle" },
+    { label: 'Organic Functional Groups', icon: '⬡', hint: 'Alkanes, alcohols & ketones' }
+  ],
+  Biology: [
+    { label: 'Cellular Respiration', icon: '🧬', hint: 'Glycolysis, Krebs & ATP' },
+    { label: 'DNA Replication & Genetics', icon: '🔬', hint: 'Polymerase & transcription' },
+    { label: 'Photosynthesis', icon: '🌱', hint: 'Light reactions & Calvin cycle' },
+    { label: 'Ecology & Food Webs', icon: '🌍', hint: 'Trophic levels & energy' }
+  ],
   English: [
     { label: 'Rhetorical Appeals', icon: '✍️', hint: 'Ethos, Pathos, Logos' },
     { label: 'Metaphor & Imagery', icon: '📖', hint: 'Literary devices' },
     { label: 'Essay Structuring', icon: '📝', hint: 'Thesis & transitions' },
     { label: 'Syntax & Grammar', icon: '🔤', hint: 'Sentence mechanics' }
+  ],
+  History: [
+    { label: 'The Industrial Revolution', icon: '🏭', hint: 'Mechanization & social change' },
+    { label: 'World War II & Diplomacy', icon: '🕊️', hint: 'Alliances & global impact' },
+    { label: 'Ancient Civilizations', icon: '🏛️', hint: 'Rome, Greece & Mesopotamia' },
+    { label: 'Cold War Era', icon: '🌐', hint: 'Superpowers & ideological division' }
+  ],
+  Art: [
+    { label: 'Color Theory & Harmony', icon: '🎨', hint: 'Complementary & analogous' },
+    { label: 'Linear Perspective', icon: '📐', hint: 'Vanishing points & horizon' },
+    { label: 'Composition & Framing', icon: '🖼️', hint: 'Rule of thirds & golden ratio' }
   ]
 };
 
@@ -34,19 +69,33 @@ export default function TopicSelectionModal({
   const [selectedSubject, setSelectedSubject] = useState(initialSubject || 'Mathematics');
   const [topicInput, setTopicInput] = useState('');
 
+  // Keep state in perfect sync whenever the modal opens or the selected initial subject changes
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedSubject(initialSubject || 'Mathematics');
+      setTopicInput('');
+    }
+  }, [isOpen, initialSubject]);
+
   if (!isOpen) return null;
 
   const normalizeSubject = (name) => {
     const s = String(name || '').toLowerCase().trim();
     if (s === 'math' || s === 'maths' || s === 'mathematics') return 'Mathematics';
+    if (s === 'cs' || s === 'compsci' || s === 'computer science') return 'Computer Science';
     if (s === 'science') return 'Science';
+    if (s === 'physics') return 'Physics';
+    if (s === 'chemistry') return 'Chemistry';
+    if (s === 'biology') return 'Biology';
     if (s === 'english') return 'English';
-    return name;
+    if (s === 'history') return 'History';
+    if (s === 'art') return 'Art';
+    return name || 'General Studies';
   };
 
   const currentSubjectClean = normalizeSubject(selectedSubject);
   const suggestions =
-    TOPIC_SUGGESTIONS[currentSubjectClean] || TOPIC_SUGGESTIONS['Mathematics'];
+    TOPIC_SUGGESTIONS[currentSubjectClean] || TOPIC_SUGGESTIONS['Computer Science'] || TOPIC_SUGGESTIONS['Mathematics'];
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
@@ -112,7 +161,7 @@ export default function TopicSelectionModal({
               <span className="text-[11px] font-bold text-[#8E8E93] uppercase tracking-wider block mb-2">
                 Select Subject
               </span>
-              <div className="inline-flex p-1 rounded-full bg-[#EFE9DF] border border-[#E5DFD4]">
+              <div className="flex items-center gap-1.5 p-1 rounded-full bg-[#EFE9DF] border border-[#E5DFD4] overflow-x-auto no-scrollbar max-w-full">
                 {subjects.map((sub) => {
                   const displayName = typeof sub === 'string' ? sub : sub.name;
                   const isSelected = normalizeSubject(displayName) === currentSubjectClean;
@@ -124,7 +173,7 @@ export default function TopicSelectionModal({
                         setSelectedSubject(displayName);
                         setTopicInput('');
                       }}
-                      className={`px-4 py-1.5 rounded-full text-[13px] font-bold transition-all cursor-pointer ${
+                      className={`px-4 py-1.5 rounded-full text-[13px] font-bold whitespace-nowrap transition-all cursor-pointer shrink-0 ${
                         isSelected
                           ? 'bg-[#0A0C0E] text-white shadow-[0_2px_8px_rgba(0,0,0,0.18)]'
                           : 'text-[#636366] hover:text-[#0A0C0E]'

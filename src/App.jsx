@@ -42,8 +42,8 @@ import TopicSelectionModal from './components/TopicSelectionModal';
 const SESSION_STORAGE_KEY = 'scholarise_session_v1';
 
 const BASE_SUBJECT_META = {
-  mathematics: { name: 'Maths', icon: BookOpen, color: 'text-[#2563EB]', bg: 'bg-[#EEF4FD]', border: 'border-[#D6E4FA]' },
-  math: { name: 'Maths', icon: BookOpen, color: 'text-[#2563EB]', bg: 'bg-[#EEF4FD]', border: 'border-[#D6E4FA]' },
+  mathematics: { name: 'Mathematics', icon: BookOpen, color: 'text-[#2563EB]', bg: 'bg-[#EEF4FD]', border: 'border-[#D6E4FA]' },
+  math: { name: 'Mathematics', icon: BookOpen, color: 'text-[#2563EB]', bg: 'bg-[#EEF4FD]', border: 'border-[#D6E4FA]' },
   science: { name: 'Science', icon: FlaskConical, color: 'text-[#E11D48]', bg: 'bg-[#FCECEB]', border: 'border-[#F7D5D4]' },
   physics: { name: 'Physics', icon: Atom, color: 'text-[#7C3AED]', bg: 'bg-[#EDE9FE]', border: 'border-[#DDD6FE]' },
   chemistry: { name: 'Chemistry', icon: FlaskConical, color: 'text-[#9333EA]', bg: 'bg-[#F3E8FF]', border: 'border-[#E9D5FF]' },
@@ -51,7 +51,9 @@ const BASE_SUBJECT_META = {
   english: { name: 'English', icon: FileText, color: 'text-[#16A34A]', bg: 'bg-[#EAF7EE]', border: 'border-[#D1EED8]' },
   history: { name: 'History', icon: Globe, color: 'text-[#D97706]', bg: 'bg-[#FEF3C7]', border: 'border-[#FDE68A]' },
   art: { name: 'Art', icon: Palette, color: 'text-[#E11D48]', bg: 'bg-[#FFE4E6]', border: 'border-[#FECDD3]' },
-  cs: { name: 'CompSci', icon: Laptop, color: 'text-[#0284C7]', bg: 'bg-[#E0F2FE]', border: 'border-[#BAE6FD]' },
+  cs: { name: 'Computer Science', icon: Laptop, color: 'text-[#0284C7]', bg: 'bg-[#E0F2FE]', border: 'border-[#BAE6FD]' },
+  compsci: { name: 'Computer Science', icon: Laptop, color: 'text-[#0284C7]', bg: 'bg-[#E0F2FE]', border: 'border-[#BAE6FD]' },
+  'computer science': { name: 'Computer Science', icon: Laptop, color: 'text-[#0284C7]', bg: 'bg-[#E0F2FE]', border: 'border-[#BAE6FD]' },
   other: { name: 'Other', icon: MoreHorizontal, color: 'text-[#4B5563]', bg: 'bg-[#F3F4F6]', border: 'border-[#E5E7EB]' },
 };
 
@@ -137,25 +139,17 @@ export default function App() {
 
   const handleOpenTopicPicker = (subKey) => {
     let chosenName = 'Mathematics';
+    const resolveName = (key) => {
+      if (!key) return 'Mathematics';
+      if (key === 'other') return customSubject.trim() || 'General Studies';
+      const cleanKey = String(key).toLowerCase().trim();
+      return BASE_SUBJECT_META[cleanKey]?.name || key;
+    };
+
     if (subKey) {
-      if (subKey === 'other') {
-        chosenName = customSubject.trim() || 'General Studies';
-      } else {
-        const found = subjects.find(
-          (s) => s.id.toLowerCase() === String(subKey).toLowerCase()
-        );
-        chosenName = found ? found.name : subKey;
-      }
+      chosenName = resolveName(subKey);
     } else if (selectedSubjects.length > 0) {
-      const firstId = selectedSubjects[0];
-      if (firstId === 'other') {
-        chosenName = customSubject.trim() || 'General Studies';
-      } else {
-        const found = subjects.find(
-          (s) => s.id.toLowerCase() === String(firstId).toLowerCase()
-        );
-        chosenName = found ? found.name : firstId;
-      }
+      chosenName = resolveName(selectedSubjects[0]);
     }
     setActivePromptSubject(chosenName);
     setIsTopicModalOpen(true);

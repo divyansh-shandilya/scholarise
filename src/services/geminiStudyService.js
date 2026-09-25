@@ -170,8 +170,174 @@ const CURATED_MICRO_SESSIONS = {
       correctIndex: 0,
       explanation: 'Logos uses verifiable data, facts, and rational deduction to prove a claim.'
     }
+  },
+  memory_management: {
+    title: 'Memory Management: Stack vs Heap',
+    topic: 'Memory Allocation & Lifecycles',
+    estimatedMinutes: 3,
+    summary: 'Master how programs allocate, access, and free system memory in 3 minutes.',
+    microParts: [
+      {
+        partNumber: 1,
+        partLabel: 'Core Intuition',
+        title: 'Stack vs. Heap Memory',
+        content:
+          'The Stack handles fast, short-lived function variables in order. The Heap handles dynamic, arbitrarily sized objects that outlive single function calls.',
+        takeaway: 'Stack is fast and automatic; Heap is flexible and persistent.'
+      },
+      {
+        partNumber: 2,
+        partLabel: 'Key Rule / Formula',
+        title: 'LIFO Execution vs Reference Pointers',
+        formula: 'Stack: LIFO frames (fast) | Heap: Dynamic chunks + pointer references',
+        content:
+          'Primitives and function pointers live on the stack; complex objects reside on the heap with their memory addresses stored on the stack.',
+        memoryHook: 'Stack for scope, Heap for heap-loads of dynamic data.'
+      },
+      {
+        partNumber: 3,
+        partLabel: '30-Second Example',
+        title: 'Variable Allocation in Memory',
+        content:
+          'Running int count = 42 pushes 4 bytes directly onto the stack. Instantiating new User() allocates a block on the heap and returns an address pointer.',
+        highlight: 'Pointer on stack → Object body on heap'
+      }
+    ],
+    quickCheck: {
+      question: 'What happens to stack-allocated variables when a function finishes executing?',
+      options: [
+        'They are automatically popped and freed immediately',
+        'They remain indefinitely until manual garbage collection runs',
+        'They are copied over to heap memory permanently',
+        'They cause a memory leak if not explicitly freed'
+      ],
+      correctIndex: 0,
+      explanation: 'Stack memory operates as LIFO; returning from a function automatically deallocates the top stack frame.'
+    }
+  },
+  computer_science: {
+    title: 'Data Structures & Big-O',
+    topic: 'Time Complexity & Algorithmic Efficiency',
+    estimatedMinutes: 3,
+    summary: 'A fast mental model for evaluating code performance and scalability.',
+    microParts: [
+      {
+        partNumber: 1,
+        partLabel: 'Core Intuition',
+        title: 'Big-O Measures Growth Rate',
+        content:
+          'Big-O notation describes how execution time or memory requirements scale as input size (N) grows towards infinity.',
+        takeaway: 'It measures worst-case scaling, not clock milliseconds.'
+      },
+      {
+        partNumber: 2,
+        partLabel: 'Key Rule / Formula',
+        title: 'The Efficiency Hierarchy',
+        formula: 'O(1) < O(log N) < O(N) < O(N log N) < O(N²)',
+        content:
+          'Constant and logarithmic lookups scale effortlessly; quadratic nested loops quickly become unviable at large data volumes.',
+        memoryHook: 'Drop constants, ignore lower-order terms, focus on dominant term.'
+      },
+      {
+        partNumber: 3,
+        partLabel: '30-Second Example',
+        title: 'Array Index vs Linear Search',
+        content:
+          'Accessing array[5] takes O(1) instant memory math. Searching an unsorted list of 1,000,000 items requires up to 1,000,000 comparisons: O(N).',
+        highlight: 'Direct index = O(1) | Unsorted search = O(N)'
+      }
+    ],
+    quickCheck: {
+      question: 'What is the time complexity of looking up a value by key in a well-balanced hash map?',
+      options: ['O(1) on average', 'O(N²)', 'O(log N) worst-case always', 'O(N log N)'],
+      correctIndex: 0,
+      explanation: 'Hash maps compute a hash of the key to index directly into an array bucket in O(1) average time.'
+    }
+  },
+  physics: {
+    title: 'Newton’s Laws & Motion',
+    topic: 'Force, Mass, and Acceleration',
+    estimatedMinutes: 3,
+    summary: 'Understand the mathematical rules governing everyday motion in 3 minutes.',
+    microParts: [
+      {
+        partNumber: 1,
+        partLabel: 'Core Intuition',
+        title: 'Inertia and Force',
+        content:
+          'Objects resist changes to their velocity. An unbalanced net external force is required to accelerate or decelerate any mass.',
+        takeaway: 'Acceleration is the result of unbalanced net force.'
+      },
+      {
+        partNumber: 2,
+        partLabel: 'Key Rule / Formula',
+        title: 'Newton’s Second Law',
+        formula: 'F_net = m · a  (Force = mass × acceleration)',
+        content:
+          'Force (in Newtons) directly scales with mass and acceleration. Doubling force doubles acceleration; doubling mass halves it.',
+        memoryHook: 'More mass needs more push; bigger push yields faster acceleration.'
+      },
+      {
+        partNumber: 3,
+        partLabel: '30-Second Example',
+        title: 'Calculating Push on a 2kg Cart',
+        content:
+          'To accelerate a 2 kg cart at 3 m/s²: F = 2 kg × 3 m/s² = 6 Newtons of net forward force required.',
+        highlight: 'F = 2kg × 3m/s² = 6 N'
+      }
+    ],
+    quickCheck: {
+      question: 'If you double the net force on an object while keeping its mass constant, what happens to acceleration?',
+      options: ['It doubles', 'It stays the same', 'It is cut in half', 'It quadruples'],
+      correctIndex: 0,
+      explanation: 'From F = ma, acceleration a = F/m is directly proportional to net force.'
+    }
   }
 };
+
+function buildDynamicMicroSession(cleanSubject, cleanTopic) {
+  return {
+    title: `${cleanTopic} Foundations`,
+    topic: cleanTopic,
+    estimatedMinutes: 3,
+    summary: `A crisp 3-minute mental model of ${cleanTopic} in ${cleanSubject}.`,
+    microParts: [
+      {
+        partNumber: 1,
+        partLabel: 'Core Intuition',
+        title: `Understanding ${cleanTopic}`,
+        content: `${cleanTopic} is a foundational concept in ${cleanSubject}. Mastering its baseline intuition unlocks intuitive problem solving.`,
+        takeaway: `Master the essential mechanism of ${cleanTopic}.`
+      },
+      {
+        partNumber: 2,
+        partLabel: 'Key Rule / Formula',
+        title: `The Core Principle of ${cleanTopic}`,
+        formula: `Principle: Systematic evaluation in ${cleanSubject}`,
+        content: `Break down ${cleanTopic} into its constituent inputs, boundary constraints, and core transformations.`,
+        memoryHook: `Identify inputs, verify constraints, and observe the resulting state.`
+      },
+      {
+        partNumber: 3,
+        partLabel: '30-Second Example',
+        title: 'Real-World Application',
+        content: `Applying ${cleanTopic} systematically simplifies problem solving and eliminates common beginner traps.`,
+        highlight: `Directly verifiable application of ${cleanTopic}`
+      }
+    ],
+    quickCheck: {
+      question: `What is the most effective approach to mastering ${cleanTopic} in ${cleanSubject}?`,
+      options: [
+        'Understand the core principles and test them with real-world examples',
+        'Memorize answers without understanding the underlying logic',
+        'Skip the fundamentals and jump straight to unverified edge cases',
+        'Avoid breaking concepts down into simpler parts'
+      ],
+      correctIndex: 0,
+      explanation: `Mastery comes from grounding your intuition in core principles and verifying them with practical examples.`
+    }
+  };
+}
 
 /**
  * Request dynamic bite-sized AI micro-lesson from Gemini
@@ -242,9 +408,9 @@ You MUST return a STRICT VALID JSON object (no markdown fences, raw JSON only) w
 }`;
 
   const candidateModels = [
-    'gemini-3.5-flash-lite',
-    'gemini-3.1-flash-lite',
-    'gemini-3.8-flash'
+    'gemini-3.5-flash',
+    'gemini-3.8-flash',
+    'gemini-flash-latest'
   ];
 
   if (GEMINI_API_KEY) {
@@ -258,8 +424,9 @@ You MUST return a STRICT VALID JSON object (no markdown fences, raw JSON only) w
             body: JSON.stringify({
               contents: [{ parts: [{ text: prompt }] }],
               generationConfig: {
-                temperature: 0.6,
-                topP: 0.95
+                temperature: 0.3,
+                topP: 0.95,
+                responseMimeType: 'application/json'
               }
             })
           }
@@ -300,17 +467,35 @@ You MUST return a STRICT VALID JSON object (no markdown fences, raw JSON only) w
     }
   }
 
-  // Fallback to curated packs if API unavailable or rate-limited
-  console.log('Using curated backup curriculum for', cleanTopic || cleanSubject);
-  const normalizedKey = cleanTopic.toLowerCase().includes('trig')
-    ? 'trigonometry'
-    : cleanSubject.toLowerCase().includes('sci')
-    ? 'science'
-    : cleanSubject.toLowerCase().includes('eng')
-    ? 'english'
-    : 'mathematics';
+  // Fallback to curated packs or dynamic topic builder if API unavailable or rate-limited
+  console.log('Using fallback curriculum for', cleanTopic, 'in', cleanSubject);
+  const topicL = cleanTopic.toLowerCase();
+  const subjL = cleanSubject.toLowerCase();
 
-  const pack = CURATED_MICRO_SESSIONS[normalizedKey] || CURATED_MICRO_SESSIONS.mathematics;
+  let pack = null;
+
+  if (topicL.includes('memor') || topicL.includes('stack') || topicL.includes('heap') || topicL.includes('pointer')) {
+    pack = CURATED_MICRO_SESSIONS.memory_management;
+  } else if (topicL.includes('trig') || topicL.includes('triangle') || topicL.includes('sin') || topicL.includes('cos') || topicL.includes('angle')) {
+    pack = CURATED_MICRO_SESSIONS.trigonometry;
+  } else if (subjL.includes('comp') || subjL === 'cs' || topicL.includes('code') || topicL.includes('algorithm') || topicL.includes('structur')) {
+    pack = CURATED_MICRO_SESSIONS.computer_science;
+  } else if (subjL.includes('physic')) {
+    pack = CURATED_MICRO_SESSIONS.physics;
+  } else if (topicL.includes('cell') || topicL.includes('dna') || topicL.includes('respir') || topicL.includes('atp')) {
+    pack = CURATED_MICRO_SESSIONS.science;
+  } else if (subjL.includes('eng') || topicL.includes('ethos') || topicL.includes('rhetoric') || topicL.includes('essay')) {
+    pack = CURATED_MICRO_SESSIONS.english;
+  } else if (subjL.includes('math') && (topicL.includes('quad') || topicL.includes('calculus') || topicL.includes('limit') || topicL.includes('root'))) {
+    pack = CURATED_MICRO_SESSIONS.mathematics;
+  } else if (subjL === 'science' || subjL.includes('natural sci')) {
+    pack = CURATED_MICRO_SESSIONS.science;
+  } else if (CURATED_MICRO_SESSIONS[subjL]) {
+    pack = CURATED_MICRO_SESSIONS[subjL];
+  } else {
+    pack = buildDynamicMicroSession(cleanSubject, cleanTopic);
+  }
+
   const keyConcepts = pack.microParts.map((mp) => ({
     concept: mp.title,
     explanation: mp.content

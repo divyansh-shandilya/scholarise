@@ -37,8 +37,23 @@ import {
 } from 'lucide-react';
 import { generateStudySession } from './services/geminiStudyService';
 import ActiveStudySessionModal from './components/ActiveStudySessionModal';
+import TopicSelectionModal from './components/TopicSelectionModal';
 
 const SESSION_STORAGE_KEY = 'scholarise_session_v1';
+
+const BASE_SUBJECT_META = {
+  mathematics: { name: 'Maths', icon: BookOpen, color: 'text-[#2563EB]', bg: 'bg-[#EEF4FD]', border: 'border-[#D6E4FA]' },
+  math: { name: 'Maths', icon: BookOpen, color: 'text-[#2563EB]', bg: 'bg-[#EEF4FD]', border: 'border-[#D6E4FA]' },
+  science: { name: 'Science', icon: FlaskConical, color: 'text-[#E11D48]', bg: 'bg-[#FCECEB]', border: 'border-[#F7D5D4]' },
+  physics: { name: 'Physics', icon: Atom, color: 'text-[#7C3AED]', bg: 'bg-[#EDE9FE]', border: 'border-[#DDD6FE]' },
+  chemistry: { name: 'Chemistry', icon: FlaskConical, color: 'text-[#9333EA]', bg: 'bg-[#F3E8FF]', border: 'border-[#E9D5FF]' },
+  biology: { name: 'Biology', icon: Leaf, color: 'text-[#16A34A]', bg: 'bg-[#DCFCE7]', border: 'border-[#BBF7D0]' },
+  english: { name: 'English', icon: FileText, color: 'text-[#16A34A]', bg: 'bg-[#EAF7EE]', border: 'border-[#D1EED8]' },
+  history: { name: 'History', icon: Globe, color: 'text-[#D97706]', bg: 'bg-[#FEF3C7]', border: 'border-[#FDE68A]' },
+  art: { name: 'Art', icon: Palette, color: 'text-[#E11D48]', bg: 'bg-[#FFE4E6]', border: 'border-[#FECDD3]' },
+  cs: { name: 'CompSci', icon: Laptop, color: 'text-[#0284C7]', bg: 'bg-[#E0F2FE]', border: 'border-[#BAE6FD]' },
+  other: { name: 'Other', icon: MoreHorizontal, color: 'text-[#4B5563]', bg: 'bg-[#F3F4F6]', border: 'border-[#E5E7EB]' },
+};
 
 const loadSavedSession = () => {
   if (typeof window === 'undefined' || !window.localStorage) return null;
@@ -113,12 +128,14 @@ export default function App() {
   const [isViewingHelp, setIsViewingHelp] = useState(false);
   const customSubjectContainerRef = useRef(null);
 
-  // Active Gemini Study Session State
+  // Topic selection & Active Gemini Study Session State
+  const [isTopicModalOpen, setIsTopicModalOpen] = useState(false);
+  const [activePromptSubject, setActivePromptSubject] = useState('Mathematics');
   const [isStudySessionOpen, setIsStudySessionOpen] = useState(false);
   const [isGeneratingSession, setIsGeneratingSession] = useState(false);
   const [activeStudySessionData, setActiveStudySessionData] = useState(null);
 
-  const handleStartStudySession = async (subKey) => {
+  const handleOpenTopicPicker = (subKey) => {
     let chosenName = 'Mathematics';
     if (subKey) {
       if (subKey === 'other') {
@@ -140,23 +157,33 @@ export default function App() {
         chosenName = found ? found.name : firstId;
       }
     }
+    setActivePromptSubject(chosenName);
+    setIsTopicModalOpen(true);
+  };
 
+  const handleLaunchSession = async ({ subject, topic }) => {
+    setIsTopicModalOpen(false);
     setIsStudySessionOpen(true);
     setIsGeneratingSession(true);
+
+    const cleanSubject = subject || 'Mathematics';
+    const cleanTopic = topic || 'General Review';
+
     setActiveStudySessionData({
-      subject: chosenName,
-      title: `Preparing ${chosenName} Revision...`,
-      estimatedMinutes: selectedTime === '30min' ? 30 : selectedTime === '45min' ? 45 : selectedTime === '1hour' ? 60 : 15,
-      summary: 'Connecting with Gemini AI to generate customized key concepts and quiz questions.',
-      keyConcepts: [],
-      quizQuestions: []
+      subject: cleanSubject,
+      topic: cleanTopic,
+      title: `${cleanTopic} Micro-Session`,
+      estimatedMinutes: 3,
+      summary: `Loading 3-min bite-sized study module for ${cleanTopic}...`,
+      microParts: []
     });
 
     try {
       const res = await generateStudySession({
-        subject: chosenName,
+        subject: cleanSubject,
+        topic: cleanTopic,
         goal: selectedExamType,
-        time: selectedTime,
+        time: '3min',
         userName: userName || 'Student',
         syllabusName: uploadedFile?.name
       });
@@ -171,12 +198,13 @@ export default function App() {
   const handleFinishStudySession = (completed) => {
     const newEntry = {
       subject: completed.subject,
-      durationMin: completed.durationMin || 15,
+      topic: completed.topic,
+      durationMin: completed.durationMin || 3,
       date: new Date().toISOString(),
       title: completed.title
     };
     setStudySessions((prev) => [newEntry, ...prev]);
-    showToast(`🎉 Logged +${completed.durationMin || 15}m in ${completed.subject}!`);
+    showToast(`🎉 Logged +${completed.durationMin || 3}m in ${completed.topic || completed.subject}!`);
   };
 
   useEffect(() => {
@@ -1732,16 +1760,8 @@ export default function App() {
           const userInitial = displayName[0]?.toUpperCase() || 'S';
 
           const subjectMeta = {
-            mathematics: { name: 'Maths', icon: BookOpen, color: 'text-[#2563EB]', bg: 'bg-[#EEF4FD]', border: 'border-[#D6E4FA]' },
-            science: { name: 'Science', icon: FlaskConical, color: 'text-[#E11D48]', bg: 'bg-[#FCECEB]', border: 'border-[#F7D5D4]' },
-            physics: { name: 'Physics', icon: Atom, color: 'text-[#7C3AED]', bg: 'bg-[#EDE9FE]', border: 'border-[#DDD6FE]' },
-            chemistry: { name: 'Chemistry', icon: FlaskConical, color: 'text-[#9333EA]', bg: 'bg-[#F3E8FF]', border: 'border-[#E9D5FF]' },
-            biology: { name: 'Biology', icon: Leaf, color: 'text-[#16A34A]', bg: 'bg-[#DCFCE7]', border: 'border-[#BBF7D0]' },
-            english: { name: 'English', icon: FileText, color: 'text-[#16A34A]', bg: 'bg-[#EAF7EE]', border: 'border-[#D1EED8]' },
-            history: { name: 'History', icon: Globe, color: 'text-[#D97706]', bg: 'bg-[#FEF3C7]', border: 'border-[#FDE68A]' },
-            art: { name: 'Art', icon: Palette, color: 'text-[#E11D48]', bg: 'bg-[#FFE4E6]', border: 'border-[#FECDD3]' },
-            cs: { name: 'CompSci', icon: Laptop, color: 'text-[#0284C7]', bg: 'bg-[#E0F2FE]', border: 'border-[#BAE6FD]' },
-            other: { name: customSubject.trim() || 'Other', icon: MoreHorizontal, color: 'text-[#4B5563]', bg: 'bg-[#F3F4F6]', border: 'border-[#E5E7EB]' },
+            ...BASE_SUBJECT_META,
+            other: { ...BASE_SUBJECT_META.other, name: customSubject.trim() || 'Other' }
           };
 
           return (
@@ -1808,7 +1828,7 @@ export default function App() {
                       {/* Apple-spec Primary CTA Button */}
                       <button
                         type="button"
-                        onClick={() => handleStartStudySession(selectedSubjects[0])}
+                        onClick={() => handleOpenTopicPicker(selectedSubjects[0])}
                         className="mt-5 bg-[#0A0C0E] hover:bg-[#1E2024] active:scale-[0.98] text-white px-6 py-3 rounded-full inline-flex items-center gap-2.5 shadow-[0_4px_16px_rgba(0,0,0,0.16)] font-[600] text-[14px] cursor-pointer transition-all"
                       >
                         <Play size={13.5} fill="currentColor" strokeWidth={0} />
@@ -1851,7 +1871,7 @@ export default function App() {
                           <button
                             type="button"
                             key={subId}
-                            onClick={() => handleStartStudySession(subId)}
+                            onClick={() => handleOpenTopicPicker(subId)}
                             className="bg-white rounded-[20px] p-4 border border-black/[0.05] shadow-[0_2px_8px_rgba(0,0,0,0.02)] flex flex-col justify-between w-[145px] h-[122px] shrink-0 text-left hover:border-black/[0.12] active:scale-[0.98] transition-all cursor-pointer group"
                           >
                             <div className="w-[36px] h-[36px] rounded-[11px] bg-[#FAF5ED] flex items-center justify-center text-[#1C1C1E] group-hover:bg-[#FCEAD2] group-hover:text-[#9A5826] transition-colors">
@@ -2475,6 +2495,15 @@ export default function App() {
             </div>
           );
         })()}
+
+        {/* Topic Selection Modal ("What topic do you want to study?") */}
+        <TopicSelectionModal
+          isOpen={isTopicModalOpen}
+          onClose={() => setIsTopicModalOpen(false)}
+          subjects={selectedSubjects.map((id) => BASE_SUBJECT_META[id?.toLowerCase()]?.name || (id === 'other' ? (customSubject.trim() || 'Other') : id))}
+          initialSubject={activePromptSubject}
+          onStartSession={handleLaunchSession}
+        />
 
         {/* Interactive Active Study Session Modal (Powered by Gemini AI) */}
         <ActiveStudySessionModal

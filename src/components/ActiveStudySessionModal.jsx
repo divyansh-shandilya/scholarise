@@ -2,378 +2,459 @@ import React, { useState, useEffect } from 'react';
 import {
   X,
   Sparkles,
-  Clock,
+  ArrowRight,
+  ArrowLeft,
   CheckCircle2,
   AlertCircle,
-  ArrowRight,
-  BookOpen,
+  Clock,
   Flame,
   Award,
-  ChevronRight,
-  RotateCcw,
+  BookOpen,
+  Lightbulb,
   Check
 } from 'lucide-react';
 
 export default function ActiveStudySessionModal({
   isOpen,
-  onClose,
-  sessionData,
   isLoading,
+  sessionData,
+  onClose,
   onFinishSession
 }) {
-  if (!isOpen) return null;
+  // Navigation:
+  // step 0, 1, 2 = microParts 1, 2, 3
+  // step 3 = quickCheck (1 single question)
+  // step 4 = celebration / summary
+  const [currentStep, setCurrentStep] = useState(0);
 
-  // Active step in the session: 0 = Concepts, 1 = Quiz, 2 = Summary / Done
-  const [step, setStep] = useState(0);
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [selectedAnswers, setSelectedAnswers] = useState({});
-  const [hasAnsweredCurrent, setHasAnsweredCurrent] = useState(false);
-  const [secondsRemaining, setSecondsRemaining] = useState(
-    (sessionData?.estimatedMinutes || 15) * 60
-  );
-  const [isTimerPaused, setIsTimerPaused] = useState(false);
+  // Quick check state
+  const [selectedAnswer, setSelectedAnswer] = useState(null);
+  const [hasAnswered, setHasAnswered] = useState(false);
 
-  // Sync timer when sessionData arrives
+  // Timer
+  const [secondsRemaining, setSecondsRemaining] = useState(180); // 3 minutes
+
   useEffect(() => {
-    if (sessionData?.estimatedMinutes) {
-      setSecondsRemaining(sessionData.estimatedMinutes * 60);
+    if (isOpen) {
+      setCurrentStep(0);
+      setSelectedAnswer(null);
+      setHasAnswered(false);
+      setSecondsRemaining(180);
     }
-  }, [sessionData]);
+  }, [isOpen, sessionData]);
 
-  // Countdown timer effect
   useEffect(() => {
-    if (isLoading || isTimerPaused || secondsRemaining <= 0 || step === 2) return;
+    if (!isOpen || isLoading || currentStep === 4) return;
     const interval = setInterval(() => {
       setSecondsRemaining((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
     return () => clearInterval(interval);
-  }, [isLoading, isTimerPaused, secondsRemaining, step]);
+  }, [isOpen, isLoading, currentStep]);
 
-  const formatTimer = (secs) => {
-    const mins = Math.floor(secs / 60);
-    const rem = secs % 60;
-    return `${mins}:${rem < 10 ? '0' : ''}${rem}`;
-  };
+  if (!isOpen) return null;
 
-  const handleSelectOption = (optIndex) => {
-    if (hasAnsweredCurrent) return;
-    setSelectedAnswers((prev) => ({
-      ...prev,
-      [currentQuestionIndex]: optIndex
-    }));
-    setHasAnsweredCurrent(true);
-  };
+  const minutes = Math.floor(secondsRemaining / 60);
+  const seconds = secondsRemaining % 60;
+  const timeFormatted = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
 
-  const handleNextQuestion = () => {
-    const totalQuestions = sessionData?.quizQuestions?.length || 0;
-    if (currentQuestionIndex + 1 < totalQuestions) {
-      setCurrentQuestionIndex((prev) => prev + 1);
-      setHasAnsweredCurrent(false);
-    } else {
-      // Finished all questions -> go to Celebration & Summary screen
-      setStep(2);
+  const microParts = sessionData?.microParts || [
+    {
+      partNumber: 1,
+      partLabel: 'Core Intuition',
+      title: sessionData?.title || 'Key Concept',
+      content: sessionData?.summary || 'Review this core concept carefully.',
+      takeaway: 'Focus on understanding the foundation.'
+    },
+    {
+      partNumber: 2,
+      partLabel: 'Key Rule',
+      title: 'The Core Rule',
+      formula: 'Fundamental Formula',
+      content: 'Apply this rule to solve standard problems.',
+      memoryHook: 'Memorize the core relationship.'
+    },
+    {
+      partNumber: 3,
+      partLabel: 'Quick Example',
+      title: 'Concrete Application',
+      content: 'Work through this example step-by-step.',
+      highlight: 'Key solution step'
     }
+  ];
+
+  const quickCheck = sessionData?.quickCheck || sessionData?.quizQuestions?.[0] || {
+    question: 'Did you understand the core idea of this micro-session?',
+    options: ['Yes, fully understood', 'Mostly clear', 'Need another review', 'Still learning'],
+    correctIndex: 0,
+    explanation: 'Great job staying engaged and reviewing the core principles!'
   };
 
-  const handleCompleteAndLog = () => {
-    if (onFinishSession) {
-      onFinishSession({
-        subject: sessionData?.subject || 'Mathematics',
-        durationMin: sessionData?.estimatedMinutes || 15,
-        title: sessionData?.title || 'Interactive Study Session',
-        date: new Date().toISOString()
-      });
-    }
+  const totalSteps = 4; // 3 micro parts + 1 quick check
+  const activePart = currentStep < 3 ? microParts[currentStep] : null;
+
+  const handleSelectOption = (idx) => {
+    if (hasAnswered) return;
+    setSelectedAnswer(idx);
+    setHasAnswered(true);
+  };
+
+  const handleFinish = () => {
+    onFinishSession({
+      subject: sessionData?.subject || 'Mathematics',
+      topic: sessionData?.topic || sessionData?.title || 'Study Session',
+      durationMin: 3,
+      title: sessionData?.title || 'Micro-Study Session'
+    });
     onClose();
   };
 
-  const questions = sessionData?.quizQuestions || [];
-  const currentQ = questions[currentQuestionIndex];
-  const userSelected = selectedAnswers[currentQuestionIndex];
-  const isCorrect = userSelected === currentQ?.correctIndex;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 sm:p-6 animate-fadeIn">
-      <div className="relative w-full max-w-[430px] h-[90vh] max-h-[860px] bg-[#FAF5ED] rounded-[36px] shadow-[0_25px_60px_rgba(0,0,0,0.35)] border border-[#E5E0D8] flex flex-col justify-between overflow-hidden">
-        {/* Top Header */}
-        <div className="relative z-20 pt-6 px-6 pb-4 bg-white/70 backdrop-blur-md border-b border-[#E5E0D8]/60 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <span className="px-3 py-1 rounded-full bg-[#FEF9EE] border border-[#F5A623]/30 text-[#D97706] text-[12.5px] font-bold tracking-tight">
-              {sessionData?.subject || 'Study Session'}
-            </span>
-            <span className="flex items-center gap-1 text-[11.5px] font-semibold text-[#71717A] bg-[#0A0C0E]/5 px-2.5 py-1 rounded-full">
-              <Sparkles size={12} className="text-[#F5A623]" />
-              AI Powered
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {/* Timer Badge */}
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0A0C0E] text-white text-[13px] font-mono font-semibold">
-              <Clock size={13} className="text-[#F5A623]" />
-              <span>{formatTimer(secondsRemaining)}</span>
+    <div
+      data-testid="active-study-session-modal"
+      className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/60 backdrop-blur-xs animate-fadeIn"
+    >
+      <div className="relative w-full h-[100dvh] sm:h-[860px] sm:max-w-[420px] bg-[#FAF5ED] sm:rounded-[44px] shadow-[0_32px_90px_rgba(0,0,0,0.45)] border border-[#E5E0D8] overflow-hidden flex flex-col justify-between">
+        {/* ================= TOP NAVIGATION BAR ================= */}
+        <div className="px-6 pt-5 pb-3 border-b border-black/[0.05] bg-[#FAF5ED]/95 backdrop-blur-md shrink-0">
+          <div className="flex items-center justify-between mb-3">
+            {/* Subject & Topic Badges */}
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 rounded-full bg-[#FEF9EE] border border-[#F5A623]/35 text-[#D97706] text-[12px] font-bold tracking-tight">
+                {sessionData?.subject || 'Mathematics'}
+              </span>
+              <span className="text-[12px] font-semibold text-[#71717A] max-w-[120px] truncate">
+                {sessionData?.topic || 'Session'}
+              </span>
             </div>
 
-            {/* Close Button */}
-            <button
-              onClick={onClose}
-              className="w-9 h-9 rounded-full bg-black/5 hover:bg-black/10 flex items-center justify-center text-[#0A0C0E] transition-colors cursor-pointer"
-              aria-label="Close session"
-            >
-              <X size={18} strokeWidth={2.4} />
-            </button>
+            {/* Timer & Close */}
+            <div className="flex items-center gap-2">
+              {!isLoading && currentStep < 4 && (
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0A0C0E] text-white text-[12.5px] font-mono font-bold shadow-2xs">
+                  <Clock size={13} className="text-[#F5A623]" />
+                  <span>{timeFormatted}</span>
+                </div>
+              )}
+              <button
+                onClick={onClose}
+                className="w-8 h-8 rounded-full bg-black/5 hover:bg-black/10 active:scale-95 flex items-center justify-center text-[#71717A] hover:text-[#0A0C0E] transition-colors cursor-pointer"
+                aria-label="Close"
+              >
+                <X size={17} />
+              </button>
+            </div>
           </div>
+
+          {/* Segmented Step Progress Bar */}
+          {!isLoading && currentStep < 4 && (
+            <div className="grid grid-cols-4 gap-1.5 pt-1">
+              {[0, 1, 2, 3].map((stepIdx) => {
+                const isPassed = stepIdx < currentStep;
+                const isCurrent = stepIdx === currentStep;
+                return (
+                  <div
+                    key={stepIdx}
+                    className={`h-[4px] rounded-full transition-all duration-300 ${
+                      isPassed
+                        ? 'bg-[#16A34A]'
+                        : isCurrent
+                        ? 'bg-[#D97706]'
+                        : 'bg-[#E5E0D8]'
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto px-6 py-5 no-scrollbar">
+        {/* ================= BODY CONTENT ================= */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 flex flex-col justify-start">
           {isLoading ? (
-            /* Loading State with Real Gemini Generation Checklist */
-            <div className="h-full flex flex-col items-center justify-center text-center py-10">
-              <div className="relative w-20 h-20 mb-6 flex items-center justify-center">
-                <div className="absolute inset-0 rounded-full border-4 border-[#F5A623]/20 animate-ping" />
+            /* Loading State */
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-12 space-y-5 animate-fadeIn">
+              <div className="relative">
+                <div className="w-16 h-16 rounded-full border-4 border-[#F5A623]/25 animate-ping absolute inset-0" />
                 <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#0A0C0E] via-[#2A2D36] to-[#F5A623] flex items-center justify-center text-white shadow-xl animate-spin">
-                  <Sparkles size={28} />
+                  <Sparkles size={24} />
                 </div>
               </div>
-
-              <h2 className="text-[22px] font-extrabold text-[#0A0C0E] tracking-tight mb-2">
-                Consulting Gemini AI...
-              </h2>
-              <p className="text-[14px] text-[#71717A] max-w-[280px] mb-6">
-                Synthesizing key curriculum topics, personalized examples, and practice questions.
-              </p>
-
-              <div className="w-full max-w-[300px] bg-white rounded-2xl p-4 border border-[#E5E0D8] space-y-2.5 text-left text-[13px]">
-                <div className="flex items-center gap-2.5 text-[#16A34A] font-medium">
-                  <CheckCircle2 size={16} />
-                  <span>Curriculum scope indexed</span>
-                </div>
-                <div className="flex items-center gap-2.5 text-[#D97706] font-medium">
-                  <Sparkles size={16} className="animate-spin" />
-                  <span>Drafting adaptive quiz questions...</span>
-                </div>
-                <div className="flex items-center gap-2.5 text-[#9CA3AF]">
-                  <div className="w-4 h-4 rounded-full border-2 border-[#D1D5DB]" />
-                  <span>Calibrating 15-min pacing</span>
-                </div>
+              <div>
+                <h3 className="text-[19px] font-black text-[#0A0C0E] tracking-tight">
+                  Crafting Bite-Sized Micro-Session...
+                </h3>
+                <p className="text-[13.5px] text-[#71717A] mt-1 max-w-[280px] leading-relaxed">
+                  Gemini AI is structuring 3 clean micro-parts for{' '}
+                  <strong className="text-[#0A0C0E]">
+                    {sessionData?.topic || sessionData?.subject}
+                  </strong>
+                  .
+                </p>
               </div>
             </div>
-          ) : step === 0 ? (
-            /* Step 0: Core Concepts & Topic Overview */
+          ) : currentStep < 3 && activePart ? (
+            /* Micro-Part Cards (One at a time) */
             <div className="space-y-5 animate-fadeIn">
-              <div>
-                <span className="text-[11.5px] font-extrabold text-[#D97706] tracking-wider uppercase">
-                  Session Topic
+              {/* Part Header */}
+              <div className="flex items-center justify-between">
+                <span className="text-[11.5px] font-extrabold text-[#D97706] tracking-wider uppercase bg-[#FEF9EE] px-2.5 py-1 rounded-full border border-[#F5A623]/25">
+                  Part {currentStep + 1} of 3 • {activePart.partLabel || 'Micro-Concept'}
                 </span>
-                <h1 className="text-[24px] font-black text-[#0A0C0E] tracking-tight leading-tight mt-0.5">
-                  {sessionData?.title}
-                </h1>
-                <p className="text-[14px] text-[#71717A] mt-1.5 leading-relaxed">
-                  {sessionData?.summary}
+                <span className="text-[12px] font-semibold text-[#71717A]">
+                  ~45s read
+                </span>
+              </div>
+
+              {/* Title */}
+              <div>
+                <h2 className="text-[23px] font-black text-[#0A0C0E] tracking-tight leading-snug">
+                  {activePart.title}
+                </h2>
+              </div>
+
+              {/* Formula / Rule Box (If present in Part 2) */}
+              {activePart.formula && (
+                <div className="p-4 rounded-[22px] bg-white border border-[#E5E0D8] shadow-2xs">
+                  <span className="text-[11px] font-bold text-[#D97706] uppercase tracking-wider block mb-2.5">
+                    Key Formula / Rule
+                  </span>
+                  {activePart.formula.includes('|') ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      {activePart.formula.split('|').map((chunk, cIdx) => (
+                        <div
+                          key={cIdx}
+                          className="px-3 py-2.5 rounded-[16px] bg-[#FEF9EE] border border-[#F5A623]/25 text-center font-mono font-bold text-[13.5px] text-[#0A0C0E]"
+                        >
+                          {chunk.trim()}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-[16px] bg-[#FEF9EE] border border-[#F5A623]/25 font-mono font-bold text-[15px] text-[#0A0C0E]">
+                      {activePart.formula}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Core Text (Crisp, clean, no long walls) */}
+              <div className="p-5 rounded-[24px] bg-white border border-[#E5E0D8] shadow-2xs">
+                <p className="text-[15.5px] text-[#27272A] leading-relaxed font-normal">
+                  {activePart.content}
                 </p>
               </div>
 
-              {/* Key Concept Cards */}
-              <div className="space-y-3">
-                <h3 className="text-[15px] font-bold text-[#0A0C0E] tracking-tight flex items-center gap-2">
-                  <BookOpen size={17} className="text-[#D97706]" />
-                  Key Takeaways
-                </h3>
-
-                {sessionData?.keyConcepts?.map((kc, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 rounded-[22px] bg-white border border-[#E5E0D8] shadow-[0_2px_10px_rgba(0,0,0,0.02)]"
-                  >
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <div className="w-5 h-5 rounded-full bg-[#FEF9EE] text-[#D97706] text-[12px] font-bold flex items-center justify-center">
-                        {idx + 1}
-                      </div>
-                      <span className="text-[15px] font-bold text-[#0A0C0E]">
-                        {kc.concept}
-                      </span>
-                    </div>
-                    <p className="text-[13.5px] text-[#4B5563] leading-relaxed pl-7 font-normal">
-                      {kc.explanation}
-                    </p>
+              {/* Takeaway / Highlight / Memory Hook */}
+              {activePart.takeaway && (
+                <div className="p-4 rounded-[20px] bg-[#FEF9EE] border border-[#F5A623]/30 flex items-start gap-2.5">
+                  <Lightbulb size={18} className="text-[#D97706] shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-[11.5px] font-bold text-[#D97706] uppercase tracking-wider block">
+                      Core Takeaway
+                    </span>
+                    <span className="text-[13.5px] font-semibold text-[#78350F] leading-snug">
+                      {activePart.takeaway}
+                    </span>
                   </div>
-                ))}
-              </div>
+                </div>
+              )}
 
-              {/* Actionable Tips */}
-              {sessionData?.actionableTakeaways?.length > 0 && (
-                <div className="p-4 rounded-[20px] bg-[#FEF9EE] border border-[#F5A623]/30">
-                  <span className="text-[12px] font-bold text-[#D97706] uppercase tracking-wide block mb-1">
-                    Study Strategy
-                  </span>
-                  <ul className="list-disc list-inside text-[13px] text-[#78350F] space-y-1">
-                    {sessionData.actionableTakeaways.map((tip, i) => (
-                      <li key={i}>{tip}</li>
-                    ))}
-                  </ul>
+              {activePart.memoryHook && (
+                <div className="p-4 rounded-[20px] bg-[#FEF9EE] border border-[#F5A623]/30 flex items-start gap-2.5">
+                  <BookOpen size={18} className="text-[#D97706] shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-[11.5px] font-bold text-[#D97706] uppercase tracking-wider block">
+                      Memory Hook
+                    </span>
+                    <span className="text-[13px] font-medium text-[#78350F] leading-snug">
+                      {activePart.memoryHook}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {activePart.highlight && (
+                <div className="p-4 rounded-[20px] bg-[#F0FDF4] border border-[#16A34A]/30 flex items-start gap-2.5">
+                  <CheckCircle2 size={18} className="text-[#16A34A] shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-[11.5px] font-bold text-[#16A34A] uppercase tracking-wider block">
+                      Key Result
+                    </span>
+                    <span className="text-[13.5px] font-semibold text-[#14532D] leading-snug font-mono">
+                      {activePart.highlight}
+                    </span>
+                  </div>
                 </div>
               )}
             </div>
-          ) : step === 1 ? (
-            /* Step 1: Interactive Practice Quiz */
-            <div className="space-y-5 animate-fadeIn">
+          ) : currentStep === 3 ? (
+            /* Step 3: Quick Check (Just 1 single question!) */
+            <div className="space-y-4 animate-fadeIn">
               <div className="flex items-center justify-between">
-                <span className="text-[12px] font-bold text-[#71717A] tracking-wider uppercase">
-                  Question {currentQuestionIndex + 1} of {questions.length}
+                <span className="text-[11.5px] font-extrabold text-[#D97706] tracking-wider uppercase bg-[#FEF9EE] px-2.5 py-1 rounded-full border border-[#F5A623]/25">
+                  Quick Check • 1 Question
                 </span>
-                <span className="text-[12px] font-semibold text-[#D97706]">
-                  Practice Check
+                <span className="text-[12px] font-semibold text-[#71717A]">
+                  Solidify Concept
                 </span>
               </div>
 
-              {/* Question Text */}
-              <h2 className="text-[19px] font-bold text-[#0A0C0E] tracking-tight leading-snug">
-                {currentQ?.question}
+              <h2 className="text-[19px] font-black text-[#0A0C0E] tracking-tight leading-snug">
+                {quickCheck.question}
               </h2>
 
-              {/* Multiple Choice Options */}
-              <div className="space-y-2.5 mt-4">
-                {currentQ?.options?.map((opt, oIdx) => {
-                  const isThisSelected = userSelected === oIdx;
-                  const isThisCorrect = oIdx === currentQ.correctIndex;
+              {/* 4 Clean Options */}
+              <div className="space-y-2.5 pt-1">
+                {quickCheck.options?.map((opt, oIdx) => {
+                  const isThisSelected = selectedAnswer === oIdx;
+                  const isThisCorrect = oIdx === quickCheck.correctIndex;
 
                   let borderClass = 'border-[#E5E0D8] bg-white';
                   let icon = null;
 
-                  if (hasAnsweredCurrent) {
+                  if (hasAnswered) {
                     if (isThisCorrect) {
-                      borderClass = 'border-[#16A34A] bg-[#DCFCE7]/60 text-[#15803D]';
+                      borderClass = 'border-[#16A34A] bg-[#DCFCE7]/70 text-[#15803D] font-bold';
                       icon = <CheckCircle2 size={18} className="text-[#16A34A] shrink-0" />;
                     } else if (isThisSelected) {
-                      borderClass = 'border-[#EF4444] bg-[#FEE2E2]/60 text-[#B91C1C]';
+                      borderClass = 'border-[#EF4444] bg-[#FEE2E2]/70 text-[#B91C1C] font-semibold';
                       icon = <AlertCircle size={18} className="text-[#EF4444] shrink-0" />;
                     }
                   } else if (isThisSelected) {
-                    borderClass = 'border-[#0A0C0E] bg-white';
+                    borderClass = 'border-[#0A0C0E] bg-white font-semibold';
                   }
 
                   return (
                     <button
                       key={oIdx}
                       data-testid="quiz-option"
-                      disabled={hasAnsweredCurrent}
+                      disabled={hasAnswered}
                       onClick={() => handleSelectOption(oIdx)}
                       className={`w-full p-4 rounded-[20px] border text-left flex items-center justify-between transition-all duration-200 cursor-pointer ${borderClass} ${
-                        !hasAnsweredCurrent ? 'hover:border-black/20 active:scale-[0.99]' : ''
+                        !hasAnswered ? 'hover:border-black/25 active:scale-[0.99]' : ''
                       }`}
                     >
-                      <span className="text-[14.5px] font-medium leading-snug">
-                        {opt}
-                      </span>
+                      <span className="text-[14.5px] leading-snug">{opt}</span>
                       {icon}
                     </button>
                   );
                 })}
               </div>
 
-              {/* Instant Explanation Feedback */}
-              {hasAnsweredCurrent && (
+              {/* Instant Feedback Explanation */}
+              {hasAnswered && (
                 <div
                   className={`p-4 rounded-[20px] animate-fadeIn border ${
-                    isCorrect
-                      ? 'bg-[#DCFCE7]/50 border-[#16A34A]/30 text-[#15803D]'
+                    selectedAnswer === quickCheck.correctIndex
+                      ? 'bg-[#DCFCE7]/60 border-[#16A34A]/30 text-[#15803D]'
                       : 'bg-[#FEF2F2] border-[#EF4444]/30 text-[#991B1B]'
                   }`}
                 >
-                  <div className="flex items-center gap-1.5 font-bold text-[14px] mb-1">
-                    {isCorrect ? 'Correct! 🎯' : 'Explanation:'}
+                  <div className="font-bold text-[13.5px] mb-1">
+                    {selectedAnswer === quickCheck.correctIndex ? 'Correct! 🎯' : 'Explanation:'}
                   </div>
                   <p className="text-[13px] leading-relaxed font-normal">
-                    {currentQ?.explanation}
+                    {quickCheck.explanation}
                   </p>
                 </div>
               )}
             </div>
           ) : (
-            /* Step 2: Session Complete & Streak Celebration */
-            <div className="h-full flex flex-col items-center justify-center text-center py-6 animate-fadeIn">
-              <div className="w-20 h-20 rounded-full bg-[#FEF9EE] border-2 border-[#F5A623] flex items-center justify-center text-[#D97706] mb-5 shadow-lg">
-                <Flame size={40} className="animate-bounce" />
+            /* Celebration / Completion Screen */
+            <div className="flex-1 flex flex-col items-center justify-center text-center py-6 animate-fadeIn">
+              <div className="w-20 h-20 rounded-full bg-[#FEF9EE] border-2 border-[#F5A623] flex items-center justify-center text-[#D97706] mb-5 shadow-md">
+                <Flame size={40} className="fill-[#F5A623]" />
               </div>
 
-              <span className="text-[12px] font-extrabold text-[#D97706] tracking-widest uppercase mb-1">
-                Session Completed!
+              <span className="text-[12px] font-extrabold text-[#D97706] tracking-wider uppercase mb-1">
+                Micro-Session Complete!
               </span>
-              <h1 className="text-[28px] font-black text-[#0A0C0E] tracking-tight leading-tight mb-2">
-                Great work today!
+              <h1 className="text-[26px] font-black text-[#0A0C0E] tracking-tight">
+                Great job today!
               </h1>
-              <p className="text-[14px] text-[#71717A] max-w-[290px] mb-6">
-                You logged <strong className="text-[#0A0C0E]">{sessionData?.estimatedMinutes || 15} minutes</strong> of focused study in{' '}
-                <strong className="text-[#0A0C0E]">{sessionData?.subject}</strong>.
+              <p className="text-[14px] text-[#71717A] mt-1 max-w-[280px] leading-relaxed">
+                You logged <strong className="text-[#0A0C0E]">3 minutes</strong> of focused study in{' '}
+                <strong className="text-[#0A0C0E]">
+                  {sessionData?.topic || sessionData?.subject}
+                </strong>
+                .
               </p>
 
-              {/* Achievement Summary Cards */}
-              <div className="w-full grid grid-cols-2 gap-3 mb-6">
-                <div className="p-4 rounded-[22px] bg-white border border-[#E5E0D8] text-center">
-                  <div className="text-[26px] font-extrabold text-[#0A0C0E] leading-none mb-1">
-                    +{sessionData?.estimatedMinutes || 15}m
-                  </div>
-                  <div className="text-[12px] text-[#71717A] font-semibold">
+              {/* Stat Cards */}
+              <div className="grid grid-cols-2 gap-3 w-full mt-6">
+                <div className="p-4 rounded-[22px] bg-white border border-[#E5E0D8] text-center shadow-2xs">
+                  <div className="text-[24px] font-black text-[#0A0C0E]">+3m</div>
+                  <div className="text-[11.5px] text-[#71717A] font-semibold mt-0.5">
                     Study Time Added
                   </div>
                 </div>
-
-                <div className="p-4 rounded-[22px] bg-white border border-[#E5E0D8] text-center">
-                  <div className="text-[26px] font-extrabold text-[#D97706] leading-none mb-1 flex items-center justify-center gap-1">
-                    <span>1</span>
-                    <Flame size={20} className="text-[#F5A623]" />
+                <div className="p-4 rounded-[22px] bg-white border border-[#E5E0D8] text-center shadow-2xs">
+                  <div className="text-[24px] font-black text-[#D97706] flex items-center justify-center gap-1">
+                    1 <Flame size={18} className="fill-[#D97706]" />
                   </div>
-                  <div className="text-[12px] text-[#71717A] font-semibold">
+                  <div className="text-[11.5px] text-[#71717A] font-semibold mt-0.5">
                     Day Streak Active
                   </div>
                 </div>
-              </div>
-
-              <div className="w-full p-4 rounded-[22px] bg-[#FEF9EE] border border-[#F5A623]/30 text-left text-[13px] text-[#78350F] flex items-center gap-3">
-                <Award size={24} className="text-[#D97706] shrink-0" />
-                <span>
-                  Your weekly progress and subject breakdown have been updated with this session.
-                </span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Bottom Action Footer */}
+        {/* ================= BOTTOM ACTION BAR ================= */}
         {!isLoading && (
-          <div className="p-6 bg-white/80 backdrop-blur-md border-t border-[#E5E0D8]/60 flex items-center justify-between gap-3">
-            {step === 0 ? (
+          <div className="p-6 pt-3 pb-6 bg-[#FAF5ED] border-t border-black/[0.05] shrink-0 space-y-2">
+            {currentStep < 2 ? (
+              /* Steps 0 & 1 -> Next part */
               <button
-                onClick={() => setStep(1)}
-                className="w-full h-[54px] bg-[#0A0C0E] hover:bg-[#1C1E24] text-white rounded-full font-bold text-[16px] flex items-center justify-between px-6 shadow-md cursor-pointer transition-all active:scale-[0.98]"
+                data-testid="next-part-btn"
+                onClick={() => setCurrentStep((prev) => prev + 1)}
+                className="w-full h-[54px] bg-[#0A0C0E] hover:bg-[#1E2024] active:scale-[0.98] text-white rounded-full font-bold text-[15.5px] flex items-center justify-between px-6 shadow-md cursor-pointer transition-all"
               >
-                <span>Start Practice Quiz ({questions.length} questions)</span>
-                <ArrowRight size={18} strokeWidth={2.4} />
+                <span>Part {currentStep + 2}: {microParts[currentStep + 1]?.partLabel || 'Next'}</span>
+                <ArrowRight size={18} />
               </button>
-            ) : step === 1 ? (
+            ) : currentStep === 2 ? (
+              /* Step 2 -> Option to do quick check or finish */
+              <div className="space-y-2">
+                <button
+                  data-testid="start-quick-check-btn"
+                  onClick={() => setCurrentStep(3)}
+                  className="w-full h-[54px] bg-[#0A0C0E] hover:bg-[#1E2024] active:scale-[0.98] text-white rounded-full font-bold text-[15.5px] flex items-center justify-between px-6 shadow-md cursor-pointer transition-all"
+                >
+                  <span>Quick 1-Question Check</span>
+                  <ArrowRight size={18} />
+                </button>
+                <button
+                  onClick={() => setCurrentStep(4)}
+                  className="w-full py-2 text-[13px] font-semibold text-[#71717A] hover:text-[#0A0C0E] transition-colors cursor-pointer"
+                >
+                  Skip check and log session (+3m)
+                </button>
+              </div>
+            ) : currentStep === 3 ? (
+              /* Step 3 (Quick check) -> View summary */
               <button
-                disabled={!hasAnsweredCurrent}
-                onClick={handleNextQuestion}
-                className={`w-full h-[54px] rounded-full font-bold text-[16px] flex items-center justify-between px-6 transition-all select-none ${
-                  hasAnsweredCurrent
-                    ? 'bg-[#0A0C0E] hover:bg-[#1C1E24] text-white cursor-pointer active:scale-[0.98] shadow-md'
+                data-testid="finish-quick-check-btn"
+                disabled={!hasAnswered}
+                onClick={() => setCurrentStep(4)}
+                className={`w-full h-[54px] rounded-full font-bold text-[15.5px] flex items-center justify-between px-6 transition-all ${
+                  hasAnswered
+                    ? 'bg-[#0A0C0E] text-white hover:bg-[#1E2024] shadow-md cursor-pointer active:scale-[0.98]'
                     : 'bg-[#E5E0D8] text-[#9CA3AF] cursor-not-allowed'
                 }`}
               >
-                <span>
-                  {currentQuestionIndex + 1 < questions.length
-                    ? 'Next Question'
-                    : 'Finish & View Results'}
-                </span>
-                <ArrowRight size={18} strokeWidth={2.4} />
+                <span>Complete Micro-Session</span>
+                <ArrowRight size={18} />
               </button>
             ) : (
+              /* Step 4 -> Return to dashboard */
               <button
-                onClick={handleCompleteAndLog}
-                className="w-full h-[56px] bg-[#0A0C0E] hover:bg-[#1C1E24] text-white rounded-full font-bold text-[16px] flex items-center justify-center gap-2 shadow-lg cursor-pointer transition-all active:scale-[0.98]"
+                data-testid="save-and-return-home-btn"
+                onClick={handleFinish}
+                className="w-full h-[54px] bg-[#0A0C0E] hover:bg-[#1E2024] active:scale-[0.98] text-white rounded-full font-bold text-[15.5px] flex items-center justify-center gap-2 shadow-lg cursor-pointer transition-all"
               >
-                <Check size={20} strokeWidth={2.5} />
+                <Check size={18} />
                 <span>Save to Progress & Return Home</span>
               </button>
             )}

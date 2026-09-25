@@ -1,270 +1,328 @@
 /**
  * Gemini AI Study Session Service
- * Generates personalized, interactive study material, key concepts,
- * and quiz questions using the Gemini API.
+ * Generates bite-sized, modular micro-learning sessions using Gemini API.
+ * Avoids overwhelming text dumps & exhausting quiz barrages by breaking
+ * lessons into 3 crisp micro-parts + 1 single optional check.
  */
 
 const GEMINI_API_KEY = import.meta.env?.VITE_GEMINI_API_KEY || '';
 
-// Fallback high-quality curricula in case of offline/network limits
-const CURATED_STUDY_PACKS = {
-  Mathematics: {
+// Curated high-yield micro-lessons for instant fallback
+const CURATED_MICRO_SESSIONS = {
+  trigonometry: {
+    title: 'Trigonometry Foundations',
+    topic: 'Right Triangles & Side Ratios',
+    estimatedMinutes: 3,
+    summary: 'Master the fundamental right-triangle side ratios and SOH-CAH-TOA in 3 minutes.',
+    microParts: [
+      {
+        partNumber: 1,
+        partLabel: 'Core Intuition',
+        title: 'The Right-Triangle Relationship',
+        content:
+          'Trigonometry connects angles to side lengths. Every right-angled triangle keeps fixed side ratios regardless of how large or small you scale it.',
+        takeaway: 'Angles uniquely fix side proportions.'
+      },
+      {
+        partNumber: 2,
+        partLabel: 'Key Rule / Formula',
+        title: 'SOH • CAH • TOA',
+        formula: 'sin(θ) = Opp/Hyp  |  cos(θ) = Adj/Hyp  |  tan(θ) = Opp/Adj',
+        content:
+          'Sine compares opposite to hypotenuse. Cosine compares adjacent to hypotenuse. Tangent compares opposite to adjacent.',
+        memoryHook: 'Some Old Horses Can Always Hear Their Owners Approach.'
+      },
+      {
+        partNumber: 3,
+        partLabel: '30-Second Example',
+        title: 'Finding Height with Tangent',
+        content:
+          'Standing 20m from a tree at a 45° angle: tan(45°) = height / 20m. Since tan(45°) = 1, the height is exactly 20 meters!',
+        highlight: 'height = 20m × tan(45°) = 20m'
+      }
+    ],
+    quickCheck: {
+      question:
+        'In a right triangle with an angle of 30°, if the hypotenuse is 10, what is the opposite side? (sin(30°) = 0.5)',
+      options: ['5', '10', '7.5', '2.5'],
+      correctIndex: 0,
+      explanation: 'Since sin(30°) = Opposite / Hypotenuse = 0.5, Opposite = 10 × 0.5 = 5.'
+    }
+  },
+  mathematics: {
     title: 'Algebra & Quadratic Foundations',
-    topic: 'Factoring, Vertex Form & Discriminant Analysis',
-    estimatedMinutes: 15,
-    summary: 'Master the core methods to solve and analyze quadratic equations with confidence.',
-    keyConcepts: [
+    topic: 'The Quadratic Formula & Roots',
+    estimatedMinutes: 3,
+    summary: 'Understand the discriminant and solve any quadratic equation in 3 minutes.',
+    microParts: [
       {
-        concept: 'The Quadratic Formula',
-        explanation: 'x = (-b ± √(b² - 4ac)) / (2a). The term b² - 4ac (the discriminant) determines the number of real roots.'
+        partNumber: 1,
+        partLabel: 'Core Intuition',
+        title: 'What Roots Actually Mean',
+        content:
+          'The roots of a quadratic are the exact x-coordinates where its parabola crosses the horizontal x-axis.',
+        takeaway: 'Roots = points where y = 0.'
       },
       {
-        concept: 'Vertex Form',
-        explanation: 'y = a(x - h)² + k. The vertex is at point (h, k), and the axis of symmetry is the vertical line x = h.'
+        partNumber: 2,
+        partLabel: 'Key Rule / Formula',
+        title: 'The Quadratic Formula & Discriminant',
+        formula: 'x = (-b ± √(b² - 4ac)) / (2a)',
+        content:
+          'The discriminant Δ = b² - 4ac tells you everything: if Δ > 0 you get two real roots; if Δ = 0 you get one root; if Δ < 0 roots are complex.',
+        memoryHook: 'Calculate b² - 4ac first before doing the rest of the formula.'
       },
       {
-        concept: 'Factoring by Grouping',
-        explanation: 'For ax² + bx + c, find two numbers that multiply to a*c and sum to b, then split the middle term.'
+        partNumber: 3,
+        partLabel: '30-Second Example',
+        title: 'Quick Discriminant Test',
+        content:
+          'For x² - 4x + 4 = 0: a=1, b=-4, c=4. Discriminant = (-4)² - 4(1)(4) = 16 - 16 = 0. Exactly one real root at x = 2!',
+        highlight: 'Δ = 0 → 1 unique real solution'
       }
     ],
-    quizQuestions: [
-      {
-        question: 'What does a discriminant value of b² - 4ac > 0 indicate for a quadratic equation?',
-        options: [
-          'Two distinct real solutions',
-          'Exactly one real repeated solution',
-          'No real solutions (two complex roots)',
-          'The equation is not quadratic'
-        ],
-        correctIndex: 0,
-        explanation: 'When the discriminant is strictly positive, the square root yields two distinct real numbers, resulting in two real roots.'
-      },
-      {
-        question: 'What is the vertex of the parabola given by y = 2(x - 3)² + 5?',
-        options: ['(3, 5)', '(-3, 5)', '(3, -5)', '(2, 5)'],
-        correctIndex: 0,
-        explanation: 'In vertex form y = a(x - h)² + k, (h, k) is the vertex. Here h = 3 and k = 5, so the vertex is (3, 5).'
-      },
-      {
-        question: 'Which of the following is the factored form of x² - 5x + 6?',
-        options: ['(x - 2)(x - 3)', '(x - 1)(x - 6)', '(x + 2)(x + 3)', '(x + 1)(x - 6)'],
-        correctIndex: 0,
-        explanation: 'We look for two numbers that multiply to +6 and add to -5. These numbers are -2 and -3: (x - 2)(x - 3) = x² - 5x + 6.'
-      }
-    ],
-    actionableTakeaways: [
-      'Always calculate the discriminant first to know what type of roots to expect.',
-      'Check if a quadratic is a perfect square trinomial before applying the full formula.'
-    ]
+    quickCheck: {
+      question: 'What does a discriminant of b² - 4ac > 0 indicate?',
+      options: [
+        'Two distinct real roots',
+        'Exactly one real root',
+        'No real roots',
+        'The equation is linear'
+      ],
+      correctIndex: 0,
+      explanation: 'A positive discriminant produces two distinct real values from the ± square root.'
+    }
   },
-  Science: {
-    title: 'Cellular Respiration & Energy Flow',
-    topic: 'Glycolysis, Krebs Cycle & ATP Synthesis',
-    estimatedMinutes: 15,
-    summary: 'Explore how cells convert biochemical energy from nutrients into ATP.',
-    keyConcepts: [
+  science: {
+    title: 'Cellular Respiration & ATP',
+    topic: 'Cellular Energy Production',
+    estimatedMinutes: 3,
+    summary: 'A clear mental model of how living cells convert glucose into ATP currency.',
+    microParts: [
       {
-        concept: 'ATP Structure & Role',
-        explanation: 'Adenosine triphosphate stores energy in high-energy phosphoanhydride bonds between phosphate groups.'
+        partNumber: 1,
+        partLabel: 'Core Intuition',
+        title: 'ATP is Cellular Cash',
+        content:
+          'Cells cannot spend glucose directly. They break glucose bonds to charge up ATP molecules, which store energy like tiny biological batteries.',
+        takeaway: 'ATP stores transferable energy in phosphate bonds.'
       },
       {
-        concept: 'Mitochondrial Membrane Gradient',
-        explanation: 'The electron transport chain pumps protons into the intermembrane space, powering ATP synthase through chemiosmosis.'
+        partNumber: 2,
+        partLabel: 'Key Rule / Formula',
+        title: 'Overall Respiration Equation',
+        formula: 'C₆H₁₂O₆ + 6 O₂ → 6 CO₂ + 6 H₂O + ~30-32 ATP',
+        content:
+          'Glucose reacts with oxygen to yield carbon dioxide, water, and roughly 30 to 32 ATP molecules.',
+        memoryHook: 'Input: sugar + air → Output: carbon dioxide + water + usable energy.'
       },
       {
-        concept: 'Aerobic vs. Anaerobic Pathways',
-        explanation: 'In the absence of oxygen, cells undergo fermentation (lactic acid or ethanol) to regenerate NAD+ for glycolysis.'
+        partNumber: 3,
+        partLabel: '30-Second Example',
+        title: 'Mitochondrial Chemiosmosis',
+        content:
+          'The electron transport chain pumps protons across the inner membrane, creating a dam-like gradient that powers ATP synthase as protons flow back.',
+        highlight: 'Proton gradient drives ATP synthase rotor'
       }
     ],
-    quizQuestions: [
-      {
-        question: 'Where does glycolysis take place within a eukaryotic cell?',
-        options: ['Cytoplasm (cytosol)', 'Mitochondrial matrix', 'Inner mitochondrial membrane', 'Nucleus'],
-        correctIndex: 0,
-        explanation: 'Glycolysis occurs in the cytosol outside mitochondria and does not require oxygen.'
-      },
-      {
-        question: 'Which molecule serves as the final electron acceptor in aerobic respiration?',
-        options: ['Oxygen (O₂)', 'Carbon dioxide (CO₂)', 'Glucose', 'Pyruvate'],
-        correctIndex: 0,
-        explanation: 'Oxygen accepts electrons at complex IV of the electron transport chain, forming H₂O.'
-      },
-      {
-        question: 'What is the net gain of ATP molecules produced directly from one molecule of glucose during glycolysis?',
-        options: ['2 ATP', '4 ATP', '32 ATP', '0 ATP'],
-        correctIndex: 0,
-        explanation: 'Glycolysis consumes 2 ATP in its investment phase and yields 4 ATP, giving a net yield of 2 ATP.'
-      }
-    ],
-    actionableTakeaways: [
-      'Trace carbon atoms from glucose (6C) through pyruvate (3C) to acetyl-CoA (2C).',
-      'Remember that proton gradient accumulation drives ATP synthase rotor rotation.'
-    ]
+    quickCheck: {
+      question: 'Where does glycolysis occur in a eukaryotic cell?',
+      options: ['Cytoplasm (cytosol)', 'Mitochondrial matrix', 'Inner membrane', 'Nucleus'],
+      correctIndex: 0,
+      explanation: 'Glycolysis takes place in the cytosol and does not require oxygen.'
+    }
   },
-  English: {
-    title: 'Rhetorical Analysis & Persuasive Devices',
-    topic: 'Ethos, Pathos, Logos & Stylistic Syntax',
-    estimatedMinutes: 15,
-    summary: 'Analyze how authors construct persuasive arguments and evaluate rhetorical devices.',
-    keyConcepts: [
+  english: {
+    title: 'Rhetorical Appeals',
+    topic: 'Ethos, Pathos, and Logos',
+    estimatedMinutes: 3,
+    summary: 'Master Aristotle’s three modes of persuasion in under 3 minutes.',
+    microParts: [
       {
-        concept: 'The Aristotelian Appeals',
-        explanation: 'Ethos establishes authority/credibility; Pathos appeals to empathy/emotion; Logos appeals to logic and evidence.'
+        partNumber: 1,
+        partLabel: 'Core Intuition',
+        title: 'The Persuasion Triangle',
+        content:
+          'Every convincing argument balances three pillars: credibility of the speaker, emotional connection to the listener, and evidence-backed logic.',
+        takeaway: 'Credibility, Emotion, Logic.'
       },
       {
-        concept: 'Syntax & Parallelism',
-        explanation: 'Using components in a sentence that are grammatically the same, or similar in their construction and sound.'
+        partNumber: 2,
+        partLabel: 'Key Rule / Formula',
+        title: 'Ethos • Pathos • Logos',
+        formula: 'Ethos = Authority  |  Pathos = Emotion  |  Logos = Reason',
+        content:
+          'Ethos relies on reputation and credentials. Pathos taps sympathy, hope, or urgency. Logos uses statistics, facts, and deductions.',
+        memoryHook: 'Ethos = Ethics/Expertise, Pathos = Passion/Pain, Logos = Logic/Layout.'
       },
       {
-        concept: 'Tone vs. Mood',
-        explanation: 'Tone is the speaker or author\'s attitude toward the topic; mood is the emotional atmosphere evoked in the reader.'
+        partNumber: 3,
+        partLabel: '30-Second Example',
+        title: 'Identifying Appeals',
+        content:
+          '“As a doctor with 20 years in cardiology (Ethos), I urge you to exercise before heart disease hurts your family (Pathos), as studies show a 40% risk reduction (Logos).”',
+        highlight: 'A masterclass argument intertwining all three appeals.'
       }
     ],
-    quizQuestions: [
-      {
-        question: 'Citing peer-reviewed medical journals in an essay on public health is an appeal to which rhetorical mode?',
-        options: ['Logos & Ethos', 'Pathos exclusively', 'Satire', 'Anaphora'],
-        correctIndex: 0,
-        explanation: 'Peer-reviewed studies provide verifiable rational data (Logos) while leveraging recognized institutional authority (Ethos).'
-      },
-      {
-        question: 'What literary device is present in the phrase: "Ask not what your country can do for you — ask what you can do for your country"?',
-        options: ['Chiasmus / Antithesis', 'Hyperbole', 'Synecdoche', 'Litotes'],
-        correctIndex: 0,
-        explanation: 'This inverts sentence structure in corresponding clauses to create contrasting balance.'
-      }
-    ],
-    actionableTakeaways: [
-      'Always identify who the intended audience is before evaluating rhetorical effectiveness.',
-      'Look for subtle diction shifts when the speaker transitions between emotional and logical appeals.'
-    ]
+    quickCheck: {
+      question: 'Citing peer-reviewed statistics in a research paper is an example of which appeal?',
+      options: ['Logos', 'Pathos', 'Ethos exclusively', 'Hyperbole'],
+      correctIndex: 0,
+      explanation: 'Logos uses verifiable data, facts, and rational deduction to prove a claim.'
+    }
   }
 };
 
 /**
- * Request dynamic AI study module from Gemini
+ * Request dynamic bite-sized AI micro-lesson from Gemini
  */
 export async function generateStudySession({
   subject = 'Mathematics',
+  topic = '',
   goal = 'upcoming exam',
-  time = '15min',
+  time = '3min',
   userName = 'Student',
   syllabusName = null
 }) {
-  const cleanSubject = subject.trim() || 'General Studies';
-  const durationNumber = parseInt(time.replace(/\D/g, ''), 10) || 15;
+  const cleanSubject = subject.trim() || 'Mathematics';
+  const cleanTopic = topic.trim() || cleanSubject;
 
-  const prompt = `You are a world-class educational AI tutor in the Scholarise mobile app.
-Generate a structured, highly engaging ${durationNumber}-minute study session for:
+  const prompt = `You are an elite, modern educational tutor in the Scholarise mobile app.
+Generate a high-impact, BITE-SIZED micro-learning module for:
 - Student: ${userName}
 - Subject: ${cleanSubject}
+- Topic: ${cleanTopic}
 - Goal: ${goal}
-${syllabusName ? `- Syllabus file reference: ${syllabusName}` : ''}
+${syllabusName ? `- Syllabus Reference: ${syllabusName}` : ''}
 
-You MUST return a VALID JSON object (and nothing else, no markdown codeblocks, raw JSON only) with this schema:
+CRITICAL ANTI-OVERWHELM RULES:
+1. Do NOT write long paragraphs or walls of text. Maximum 2 concise sentences per micro-part.
+2. Break into exactly 3 micro-parts:
+   - Part 1: Core Intuition (what is this concept in plain English)
+   - Part 2: Key Rule or Formula (clean formula + 1 sentence on why it works + short memory hook)
+   - Part 3: Quick Real-World Example (a 15-second clear practical calculation or scenario)
+3. Include ONE single multiple-choice comprehension check (NOT a long quiz, just 1 single clear question with 4 options, correctIndex, and 1-sentence explanation).
+
+You MUST return a STRICT VALID JSON object (no markdown fences, raw JSON only) with this schema:
 {
-  "title": "Short punchy session title (e.g. Newton's Laws & Force Equilibrium)",
-  "topic": "Specific subtopic name",
-  "estimatedMinutes": ${durationNumber},
-  "summary": "2-sentence inspiring overview of what will be learned.",
-  "keyConcepts": [
+  "title": "Short Punchy Title (e.g. Trigonometry: SOH-CAH-TOA)",
+  "topic": "${cleanTopic}",
+  "estimatedMinutes": 3,
+  "summary": "1 concise sentence overview.",
+  "microParts": [
     {
-      "concept": "Concept 1 Name",
-      "explanation": "Clear, concise 1-2 sentence breakdown."
+      "partNumber": 1,
+      "partLabel": "Core Intuition",
+      "title": "Short Concept Subtitle",
+      "content": "Max 2 punchy sentences.",
+      "takeaway": "One-line key takeaway."
     },
     {
-      "concept": "Concept 2 Name",
-      "explanation": "Clear, concise 1-2 sentence breakdown."
+      "partNumber": 2,
+      "partLabel": "Key Rule / Formula",
+      "title": "Rule Name",
+      "formula": "e.g. sin(θ) = Opp / Hyp",
+      "content": "1 sentence explanation.",
+      "memoryHook": "Short memorable mnemonic."
     },
     {
-      "concept": "Concept 3 Name",
-      "explanation": "Clear, concise 1-2 sentence breakdown."
+      "partNumber": 3,
+      "partLabel": "30-Second Example",
+      "title": "Applied Calculation",
+      "content": "A concrete 15-second scenario.",
+      "highlight": "key number or takeaway"
     }
   ],
-  "quizQuestions": [
-    {
-      "question": "Clear multiple-choice practice question testing comprehension?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctIndex": 0,
-      "explanation": "Why this answer is correct."
-    },
-    {
-      "question": "Second multiple-choice practice question?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctIndex": 1,
-      "explanation": "Why this answer is correct."
-    },
-    {
-      "question": "Third multiple-choice practice question?",
-      "options": ["Option A", "Option B", "Option C", "Option D"],
-      "correctIndex": 2,
-      "explanation": "Why this answer is correct."
-    }
-  ],
-  "actionableTakeaways": [
-    "Practical study tip 1",
-    "Practical study tip 2"
-  ]
+  "quickCheck": {
+    "question": "One focused question testing the concept?",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctIndex": 0,
+    "explanation": "1-sentence explanation of why it is correct."
+  }
 }`;
 
-  // Try Gemini models in order of speed and stability
   const candidateModels = [
     'gemini-3.5-flash-lite',
     'gemini-3.1-flash-lite',
     'gemini-3.8-flash'
   ];
 
-  for (const model of candidateModels) {
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.7,
-              topP: 0.95
-            }
-          })
+  if (GEMINI_API_KEY) {
+    for (const model of candidateModels) {
+      try {
+        const response = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: {
+                temperature: 0.6,
+                topP: 0.95
+              }
+            })
+          }
+        );
+
+        if (!response.ok) {
+          console.warn(`Gemini model ${model} responded with HTTP ${response.status}`);
+          continue;
         }
-      );
 
-      if (!response.ok) {
-        console.warn(`Gemini model ${model} responded with HTTP ${response.status}`);
-        continue;
+        const data = await response.json();
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawText) continue;
+
+        const cleaned = rawText.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+
+        if (parsed.title && Array.isArray(parsed.microParts) && parsed.microParts.length > 0) {
+          // Adapt for any legacy components
+          const keyConcepts = parsed.microParts.map((mp) => ({
+            concept: mp.title,
+            explanation: mp.content
+          }));
+          const quizQuestions = parsed.quickCheck ? [parsed.quickCheck] : [];
+
+          return {
+            ...parsed,
+            keyConcepts,
+            quizQuestions,
+            source: `Gemini (${model})`,
+            subject: cleanSubject,
+            topic: cleanTopic
+          };
+        }
+      } catch (err) {
+        console.warn(`Error generating session with ${model}:`, err);
       }
-
-      const data = await response.json();
-      const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!rawText) continue;
-
-      // Extract JSON from potential code fences
-      const cleaned = rawText.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
-      const parsed = JSON.parse(cleaned);
-
-      if (parsed.title && Array.isArray(parsed.keyConcepts) && Array.isArray(parsed.quizQuestions)) {
-        return {
-          ...parsed,
-          source: `Gemini (${model})`,
-          subject: cleanSubject
-        };
-      }
-    } catch (err) {
-      console.warn(`Error generating session with ${model}:`, err);
     }
   }
 
-  // Graceful fallback to curated curriculum if API offline or rate-limited
-  console.log('Using curated backup curriculum for', cleanSubject);
-  const fallback =
-    CURATED_STUDY_PACKS[cleanSubject] ||
-    CURATED_STUDY_PACKS['Mathematics'];
+  // Fallback to curated packs if API unavailable or rate-limited
+  console.log('Using curated backup curriculum for', cleanTopic || cleanSubject);
+  const normalizedKey = cleanTopic.toLowerCase().includes('trig')
+    ? 'trigonometry'
+    : cleanSubject.toLowerCase().includes('sci')
+    ? 'science'
+    : cleanSubject.toLowerCase().includes('eng')
+    ? 'english'
+    : 'mathematics';
+
+  const pack = CURATED_MICRO_SESSIONS[normalizedKey] || CURATED_MICRO_SESSIONS.mathematics;
+  const keyConcepts = pack.microParts.map((mp) => ({
+    concept: mp.title,
+    explanation: mp.content
+  }));
+  const quizQuestions = pack.quickCheck ? [pack.quickCheck] : [];
 
   return {
-    ...fallback,
+    ...pack,
+    keyConcepts,
+    quizQuestions,
     source: 'Scholarise Core Curriculum',
-    subject: cleanSubject
+    subject: cleanSubject,
+    topic: cleanTopic
   };
 }

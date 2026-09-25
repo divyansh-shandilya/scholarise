@@ -38,7 +38,10 @@ capture_screens.js
 quick-config.yml
 audit_captures/
 audit_captures_v2/
+audit_captures_v3/
 audit_site.js
 test_ai_session_flow.js
 test_gemini.js
+test_trig_micro_session.js
+
 
